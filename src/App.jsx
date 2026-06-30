@@ -43,14 +43,14 @@ const LogoB=({height=36})=><img src={LOGO_B} alt="C-RAM Entertainment" style={{h
 
 // ── PACKAGES ─────────────────────────────────────────────────────
 const PACKAGES=[
-  {id:"essential",name:"THE ESSENTIAL",tagline:"Your foundation for a great night",price:2200,exGST:2000,tag:null,accentColor:C.muted,borderColor:C.border,hours:"4 Hours",
-   includes:[{name:"4-Hour DJ Set",detail:"Full reception or party set"},{name:"Pre-Event Music Consultation",detail:"30 min planning session"},{name:"Professional PA System",detail:"Up to 100 guests"},{name:"Wireless Microphone",detail:"Speeches and announcements"},{name:"Professional DJ Booth Setup",detail:"Clean modern setup"},{name:"Travel within 40km",detail:"Included"}],
-   excludes:["Ceremony & cocktail","MC service","Lighting","Set recording"],cta:"Book Essential"},
-  {id:"signature",name:"THE SIGNATURE",tagline:"The full experience your event deserves",price:3400,exGST:3090.91,tag:"MOST POPULAR",accentColor:C.gold,borderColor:C.gold,hours:"5 Hours",
-   includes:[{name:"5-Hour DJ Set",detail:"Full reception or party set"},{name:"Ceremony & Cocktail Hour",detail:"2hr portable setup"},{name:"Pre-Event Consultation",detail:"45 min deep-dive"},{name:"Professional PA System",detail:"Up to 150 guests"},{name:"Wireless Microphone",detail:"Speeches and announcements"},{name:"MC Services",detail:"Runsheet + on-the-night MC"},{name:"Dancefloor Lighting",detail:"LED wash lights"},{name:"Set Recording",detail:"Relive your dancefloor"},{name:"Travel within 40km",detail:"Included"}],
-   excludes:["Moving head lighting"],cta:"Book Signature"},
-  {id:"premium",name:"THE PREMIUM",tagline:"Full production. Zero compromise.",price:4800,exGST:4363.64,tag:"FULL PRODUCTION",accentColor:C.coral,borderColor:C.coral,hours:"6 Hours",
-   includes:[{name:"6-Hour DJ Set",detail:"Extended full coverage"},{name:"Ceremony & Cocktail Hour",detail:"2hr portable setup"},{name:"Pre-Event Consultation",detail:"60 min + venue visit"},{name:"Professional PA System",detail:"Up to 200+ guests"},{name:"Wireless Microphone",detail:"Speeches and announcements"},{name:"MC Services",detail:"Full runsheet + on-the-night MC"},{name:"Full Lighting Production",detail:"LED wash + moving heads + haze"},{name:"Set Recording",detail:"Relive your dancefloor"},{name:"Post-Event Follow Up",detail:"Recap + highlight reel"},{name:"Travel within 60km",detail:"Included"}],
+  {id:"essential",name:"THE ESSENTIAL",tagline:"Everything you need to fill the floor",price:2200,exGST:2000,tag:null,accentColor:C.muted,borderColor:C.border,hours:"5 Hours",
+   includes:[{name:"5-hour set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"DJ controller decks",detail:"Pro-grade gear"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights",detail:"To build the atmosphere"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
+   excludes:["Extra lighting tubes","Haze machine","Cocktail set","Turntables & mixer","Moving heads"],cta:"Book Essential"},
+  {id:"signature",name:"THE SIGNATURE",tagline:"Next-level lighting & atmosphere",price:3400,exGST:3090.91,tag:"MOST POPULAR",accentColor:C.gold,borderColor:C.gold,hours:"5 Hours",
+   includes:[{name:"5-hour set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"DJ controller decks",detail:"Pro-grade gear"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights",detail:"To build the atmosphere"},{name:"4 extra lighting tubes",detail:"All lighting synced to the music"},{name:"Haze machine",detail:"Where the venue allows"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
+   excludes:["Cocktail set","Turntables & mixer","Moving heads"],cta:"Book Signature"},
+  {id:"premium",name:"THE PREMIUM",tagline:"The full show — turntables, cocktail set & moving heads",price:4800,exGST:4363.64,tag:"FULL PRODUCTION",accentColor:C.coral,borderColor:C.coral,hours:"2hr cocktail + 5hr set",
+   includes:[{name:"2-hour cocktail set",detail:"Battery setup — plays anywhere"},{name:"5-hour main set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"2 turntable controllers + DJ mixer",detail:"Authentic old-school look"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights + 4 light tubes",detail:"Synced to the music"},{name:"2 moving heads",detail:"Adds dimension to the party"},{name:"Haze machine",detail:"Where the venue allows"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
    excludes:[],cta:"Book Premium"},
 ];
 const ADDONS_LIST=[
@@ -1209,7 +1209,7 @@ function Home({navigate}) {
         <div style={{position:"relative",maxWidth:880,margin:"0 auto",padding:"72px 18px 80px",textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:18}}><EQBars/></div>
           <h1 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:"clamp(44px,9vw,84px)",letterSpacing:3,lineHeight:0.95,color:C.text}}>C-RAM<br/><span style={{color:C.gold}}>ENTERTAINMENT</span></h1>
-          <p style={{color:C.text,fontSize:"clamp(15px,2.4vw,19px)",maxWidth:560,margin:"18px auto 0",lineHeight:1.5}}>As a DJ based in Melbourne, I'm prepared to elevate your wedding or event.</p>
+          <p style={{color:C.text,fontSize:"clamp(15px,2.4vw,19px)",maxWidth:560,margin:"18px auto 0",lineHeight:1.5}}>As a DJ based in Melbourne, I'm prepared to elevate your wedding, corporate event or celebration.</p>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginTop:26}}>
             <Btn onClick={()=>navigate("contact")} style={{padding:"13px 26px",fontSize:15}}>Get In Touch</Btn>
             <Btn variant="outline" onClick={()=>navigate("services")} style={{padding:"13px 26px",fontSize:15}}>View Services</Btn>
@@ -1374,12 +1374,37 @@ function Gallery({navigate}) {
   );
 }
 
+// ── ADMIN ACCESS GATE ────────────────────────────────────────────
+// Your private Business Hub passcode. CHANGE THIS to your own code.
+const ADMIN_CODE = "djcram";
+
+function AdminLock({onUnlock, navigate}) {
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState(false);
+  const tryUnlock = () => { if(code===ADMIN_CODE){ onUnlock(); } else { setErr(true); } };
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,position:"relative"}}>
+      <style>{css}</style>
+      <button onClick={()=>navigate("home")} style={{position:"absolute",top:16,left:16,background:"none",border:"none",color:C.muted,fontSize:13}}>← Back to site</button>
+      <Card style={{maxWidth:360,width:"100%",textAlign:"center",padding:"34px 24px"}}>
+        <div style={{fontSize:38,marginBottom:6}}>🔒</div>
+        <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:1,color:C.text}}>Business Hub</h2>
+        <p style={{color:C.muted,fontSize:13,marginTop:4,marginBottom:18}}>Private — enter your access code.</p>
+        <input type="password" value={code} placeholder="Access code" onChange={e=>{setCode(e.target.value);setErr(false);}} onKeyDown={e=>{if(e.key==="Enter")tryUnlock();}} style={{textAlign:"center",letterSpacing:2,marginBottom:err?6:14}} />
+        {err && <div style={{color:C.coral,fontSize:12.5,marginBottom:12}}>Incorrect code. Try again.</div>}
+        <Btn onClick={tryUnlock} style={{width:"100%"}}>Unlock</Btn>
+      </Card>
+    </div>
+  );
+}
+
 export default function App(){
   const [clients,setClients]=useState(SEED_CLIENTS);
   const [invoices,setInvoices]=useState(SEED_INVOICES);
   const [djs,setDjs]=useState(SEED_DJS);
   const [biz,setBiz]=useState(DEFAULT_BIZ);
   const [tab,setTab]=useState("dashboard");
+  const [unlocked,setUnlocked]=useState(false);
 
   const pathToRoute=(p)=>{p=(p||"").toLowerCase();if(/admin|hub/.test(p))return"admin";if(/service/.test(p))return"services";if(/gallery/.test(p))return"gallery";if(/get-in-touch|contact|enquir/.test(p))return"contact";return"home";};
   const [route,setRoute]=useState(()=> typeof window!=="undefined" ? pathToRoute(window.location.pathname) : "home");
@@ -1401,6 +1426,9 @@ export default function App(){
     else page=<Home navigate={navigate}/>;
     return <PublicShell route={route} navigate={navigate}>{page}</PublicShell>;
   }
+
+  // Admin hub is gated by a passcode so the public can't open it.
+  if(!unlocked) return <AdminLock onUnlock={()=>setUnlocked(true)} navigate={navigate}/>;
 
   return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column"}}>
