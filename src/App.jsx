@@ -298,6 +298,83 @@ function downloadInvoicePDF(inv, biz, onDone) {
   document.body.appendChild(printBtn);
 }
 
+// ── EXPORT ALL DATA TO EXCEL (.xlsx, CSV fallback) ────────────────
+async function exportAllToExcel(clients, invoices, djs, biz){
+  const num = n => Number(n)||0;
+
+  const invSummary = invoices.map(inv=>{
+    const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
+    const gst = subtotal*0.1;
+    return {
+      "Invoice #": inv.id, "Client": inv.client, "Client Email": inv.clientEmail||"",
+      "Client Phone": inv.clientPhone||"", "Client ABN": inv.clientABN||"",
+      "Date": inv.date||"", "Due": inv.due||"", "Status": inv.status||"",
+      "Subtotal (ex GST)": num(subtotal), "GST (10%)": num(gst), "Total (inc GST)": num(subtotal+gst),
+      "Payment Ref": inv.paymentRef||inv.id, "Notes": inv.notes||""
+    };
+  });
+
+  const lineItems = [];
+  invoices.forEach(inv=>inv.items.forEach(it=>{
+    lineItems.push({
+      "Invoice #": inv.id, "Client": inv.client,
+      "Description": it.desc||it.catalogueLabel||"",
+      "Qty": num(it.qty), "Rate (ex GST)": num(it.rate),
+      "Amount (ex GST)": num(it.qty)*num(it.rate)
+    });
+  }));
+
+  const clientRows = clients.map(c=>({
+    "Name": c.name||"", "Type": c.type||"", "Status": c.status||"",
+    "Phone": c.phone||"", "Email": c.email||"", "Event Date": c.eventDate||"",
+    "Venue": c.venue||"", "Quoted Value": num(c.value), "Paid": c.paid?"Yes":"No",
+    "ABN": c.abn||"", "Source": c.source||"", "Notes": c.notes||""
+  }));
+
+  const djRows = djs.map(d=>({
+    "Name": d.name||"", "Role": d.role||"", "Styles": (d.styles||[]).join(", "),
+    "Rate": d.rate||"", "Available": d.available?"Yes":"No",
+    "Instagram": d.instagram||"", "Bio": d.bio||""
+  }));
+
+  const bizRows = Object.entries({
+    "Business Name":biz.name,"ABN":biz.abn,"Address":biz.address,"Phone":biz.phone,
+    "Email":biz.email,"Website":biz.website,"Bank":biz.bank,"BSB":biz.bsb,
+    "Account Name":biz.accountName,"Account No.":biz.account,"Instagram":biz.instagram,"Mixcloud":biz.mixcloud
+  }).map(([k,v])=>({Field:k, Value:v||""}));
+
+  const today = new Date().toISOString().slice(0,10);
+  const fname = "C-RAM-Records-" + today;
+
+  try {
+    const mod = await import("xlsx");
+    const XLSX = mod.utils ? mod : (mod.default || mod);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientRows), "Clients");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invSummary), "Invoices");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lineItems), "Invoice Line Items");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(djRows), "DJ Roster");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bizRows), "Business");
+    XLSX.writeFile(wb, fname + ".xlsx");
+    return {ok:true, format:"xlsx"};
+  } catch(e) {
+    // Fallback: one CSV with every section — opens in Excel, needs no library.
+    const esc = v => { const s=String(v==null?"":v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    const section = (title, rows) => {
+      if(!rows.length) return title+"\n(no records)\n\n";
+      const headers = Object.keys(rows[0]);
+      return title+"\n"+[headers.join(",")].concat(rows.map(r=>headers.map(h=>esc(r[h])).join(","))).join("\n")+"\n\n";
+    };
+    const csv = section("CLIENTS",clientRows)+section("INVOICES",invSummary)+section("INVOICE LINE ITEMS",lineItems)+section("DJ ROSTER",djRows)+section("BUSINESS DETAILS",bizRows);
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=fname+".csv"; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    return {ok:true, format:"csv"};
+  }
+}
+
 // ── SEND MODAL ────────────────────────────────────────────────────
 function SendModal({inv, biz, onClose, onSent}) {
   const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
@@ -1405,6 +1482,7 @@ export default function App(){
   const [biz,setBiz]=useState(DEFAULT_BIZ);
   const [tab,setTab]=useState("dashboard");
   const [unlocked,setUnlocked]=useState(false);
+  const [exportStatus,setExportStatus]=useState("");
 
   const pathToRoute=(p)=>{p=(p||"").toLowerCase();if(/admin|hub/.test(p))return"admin";if(/service/.test(p))return"services";if(/gallery/.test(p))return"gallery";if(/get-in-touch|contact|enquir/.test(p))return"contact";return"home";};
   const [route,setRoute]=useState(()=> typeof window!=="undefined" ? pathToRoute(window.location.pathname) : "home");
@@ -1441,6 +1519,8 @@ export default function App(){
               <span>{n.icon}</span><span style={{marginLeft:3}}>{n.label}</span>
             </button>
           ))}
+          <button onClick={async()=>{setExportStatus("Preparing…");try{const r=await exportAllToExcel(clients,invoices,djs,biz);setExportStatus(r.format==="csv"?"Saved as CSV ✓":"Saved ✓");}catch(e){setExportStatus("Works on your live site");}setTimeout(()=>setExportStatus(""),4000);}} style={{background:"transparent",color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:600}}>⬇ Export Excel</button>
+          {exportStatus&&<span style={{fontSize:11,color:C.muted,alignSelf:"center",marginLeft:2}}>{exportStatus}</span>}
           <button onClick={()=>navigate("home")} style={{background:"transparent",color:C.green,border:`1px solid ${C.green}55`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:600}}>🌐 View Site</button>
         </nav>
       </header>
