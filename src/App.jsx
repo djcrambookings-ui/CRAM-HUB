@@ -5,6 +5,8 @@ import {
   listInvoices, saveInvoice, deleteInvoice,
   listDjs, saveDj, deleteDj,
   getSettings, saveSettings,
+  listPackages, savePackage, deletePackage,
+  listAddons, saveAddon, deleteAddon,
 } from "./db";
 
 // One-shot hand-off used to deep-link an invoice from the CRM tab to the Invoices tab.
@@ -1088,41 +1090,159 @@ function Content(){
   );
 }
 
-function Packages(){
-  const [active,setActive]=useState("essential");
-  const pkg=PACKAGES.find(p=>p.id===active)||PACKAGES[0];
-  const AD=[{name:"Extra Hour",price:"$400/hr"},{name:"Ceremony & Cocktail",price:"$800"},{name:"Lighting Upgrade",price:"$600"},{name:"Set Recording",price:"$100"},{name:"Live Musician",price:"POA"},{name:"Second DJ",price:"POA"}];
-  return(
-    <div style={{animation:"slideIn 0.3s ease"}}>
-      <div style={{textAlign:"center",marginBottom:22}}><LogoW height={60}/><h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:32,letterSpacing:4,color:C.text,marginTop:12}}>ENTERTAINMENT PACKAGES</h2><p style={{color:C.muted,fontSize:13,marginTop:6}}>Transparent pricing. No surprises.</p></div>
-      <div style={{display:"flex",gap:0,marginBottom:22,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`}}>
-        {PACKAGES.map((p,i)=>(
-          <button key={p.id} onClick={()=>setActive(p.id)} style={{flex:1,padding:"13px 8px",cursor:"pointer",border:"none",background:active===p.id?(p.accentColor===C.gold?C.gold:p.accentColor===C.coral?C.coral:C.surface):C.surface,color:active===p.id?(p.accentColor===C.gold||p.accentColor===C.coral)?"#000":C.text:C.muted,borderRight:i<2?`1px solid ${C.border}`:"none",transition:"all 0.2s"}}>
-            {p.tag&&<div style={{fontSize:9,fontWeight:800,letterSpacing:1,marginBottom:3,opacity:0.85}}>{p.tag}</div>}
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:16,letterSpacing:2}}>{p.name.replace("THE ","")}</div>
-            <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:20,letterSpacing:1,marginTop:2}}>${p.price.toLocaleString()}</div>
-            <div style={{fontSize:10,marginTop:1,opacity:0.7}}>{p.hours}</div>
-          </button>
-        ))}
-      </div>
-      <Card style={{border:`2px solid ${pkg.borderColor}`,marginBottom:16}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,flexWrap:"wrap",gap:8}}>
-          <div>{pkg.tag&&<div style={{fontSize:11,fontWeight:800,color:pkg.accentColor===C.muted?C.muted:pkg.accentColor,letterSpacing:2,marginBottom:4}}>{pkg.tag}</div>}<h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:3,color:C.text}}>{pkg.name}</h3><p style={{color:C.muted,fontSize:13,marginTop:4}}>{pkg.tagline}</p></div>
-          <div style={{textAlign:"right"}}><div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:46,color:pkg.accentColor===C.muted?C.text:pkg.accentColor,lineHeight:1}}>{fmt$(pkg.price)}</div><div style={{fontSize:12,color:C.muted}}>{pkg.hours} · inc GST</div></div>
+function Packages({packages,addons,onSavePackage,onDeletePackage,onSaveAddon,onDeleteAddon}){
+  const [editing,setEditing]=useState(null); // package id, or "new"
+  const [form,setForm]=useState(null);
+  const [busy,setBusy]=useState(false);
+  const colOf=k=>({muted:C.muted,gold:C.gold,coral:C.coral}[k]||C.muted);
+  const blank={name:"NEW PACKAGE",tagline:"",price:0,hours:"5 Hours",tag:"",color:"muted",cta:"Book Now",includes:[{name:"",detail:""}],excludes:[],active:true};
+
+  const startEdit=pk=>{setForm({...pk,includes:(pk.includes||[]).map(i=>({...i})),excludes:[...(pk.excludes||[])]});setEditing(pk.id);};
+  const startNew=()=>{setForm({...blank,includes:[{name:"",detail:""}],excludes:[]});setEditing("new");};
+  const cancel=()=>{setEditing(null);setForm(null);};
+  const setField=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const setInc=(i,k,v)=>setForm(f=>({...f,includes:f.includes.map((x,j)=>j===i?{...x,[k]:v}:x)}));
+  const addInc=()=>setForm(f=>({...f,includes:[...f.includes,{name:"",detail:""}]}));
+  const remInc=i=>setForm(f=>({...f,includes:f.includes.filter((_,j)=>j!==i)}));
+  const setExc=(i,v)=>setForm(f=>({...f,excludes:f.excludes.map((x,j)=>j===i?v:x)}));
+  const addExc=()=>setForm(f=>({...f,excludes:[...f.excludes,""]}));
+  const remExc=i=>setForm(f=>({...f,excludes:f.excludes.filter((_,j)=>j!==i)}));
+
+  const savePkg=async()=>{
+    const clean={...form,price:Number(form.price)||0,
+      includes:form.includes.filter(x=>x.name&&x.name.trim()),
+      excludes:form.excludes.filter(x=>x&&x.trim())};
+    setBusy(true);
+    try{await onSavePackage(clean);cancel();}
+    catch(e){alert("Couldn't save package: "+(e.message||e));}
+    setBusy(false);
+  };
+  const delPkg=async pk=>{
+    if(!confirm(`Delete "${pk.name}"? This can't be undone.`))return;
+    setBusy(true);
+    try{await onDeletePackage(pk.id);}
+    catch(e){alert("Couldn't delete: "+(e.message||e));}
+    setBusy(false);
+  };
+
+  if(editing&&form){
+    const th={fontSize:11,fontWeight:600,color:C.muted};
+    return(
+      <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
+          <Btn variant="ghost" onClick={cancel}>← Back</Btn>
+          <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{editing==="new"?"New Package":"Edit Package"}</h2>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:pkg.excludes.length?12:0}}>
-          {pkg.includes.map((item,i)=>(
-            <div key={i} style={{display:"flex",gap:8,background:C.bg,borderRadius:8,padding:10}}>
-              <span style={{color:C.green,fontSize:13,flexShrink:0}}>✓</span>
-              <div><div style={{fontSize:13,fontWeight:600}}>{item.name}</div><div style={{fontSize:11,color:C.muted,marginTop:1}}>{item.detail}</div></div>
+        <Card style={{marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}><label style={th}>Package Name</label><input value={form.name||""} onChange={e=>setField("name",e.target.value)}/></div>
+            <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}><label style={th}>Tagline</label><input value={form.tagline||""} onChange={e=>setField("tagline",e.target.value)}/></div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Price ($ inc GST)</label><input type="number" value={form.price} onChange={e=>setField("price",e.target.value)}/></div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Hours / Duration</label><input value={form.hours||""} onChange={e=>setField("hours",e.target.value)}/></div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Badge (optional)</label><input value={form.tag||""} placeholder="e.g. MOST POPULAR" onChange={e=>setField("tag",e.target.value)}/></div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Highlight Colour</label><select value={form.color} onChange={e=>setField("color",e.target.value)}>{[["muted","Grey"],["gold","Gold"],["coral","Coral"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Button Text</label><input value={form.cta||""} onChange={e=>setField("cta",e.target.value)}/></div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}><input type="checkbox" checked={form.active!==false} onChange={e=>setField("active",e.target.checked)} style={{width:"auto"}}/><label style={th}>Show this package</label></div>
+          </div>
+        </Card>
+        <Card style={{marginBottom:12}}>
+          <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>What's Included</h4>
+          {form.includes.map((it,i)=>(
+            <div key={i} style={{display:"flex",gap:6,marginBottom:8,alignItems:"flex-start"}}>
+              <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
+                <input value={it.name} placeholder="Item (e.g. 5-hour set)" onChange={e=>setInc(i,"name",e.target.value)}/>
+                <input value={it.detail} placeholder="Detail (e.g. 11pm cut-off)" onChange={e=>setInc(i,"detail",e.target.value)} style={{fontSize:12}}/>
+              </div>
+              <button onClick={()=>remInc(i)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"8px 10px",fontSize:12,cursor:"pointer"}}>✕</button>
             </div>
           ))}
-        </div>
-        {pkg.excludes.length>0&&<div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:4}}><div style={{fontSize:10,fontWeight:700,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Not Included</div><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{pkg.excludes.map((e,i)=><span key={i} style={{fontSize:11,color:C.dim,background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"3px 8px"}}>— {e}</span>)}</div></div>}
-        <div style={{marginTop:14}}><a href="https://c-rament.com.au/get-in-touch/" target="_blank" rel="noopener noreferrer" style={{display:"block",background:pkg.accentColor===C.muted?C.surface:pkg.accentColor===C.gold?C.gold:C.coral,color:pkg.accentColor===C.gold?"#000":"#fff",border:pkg.accentColor===C.muted?`1px solid ${C.border}`:"none",borderRadius:10,padding:"12px 0",textAlign:"center",fontWeight:800,fontSize:15,textDecoration:"none"}}>{pkg.cta} →</a></div>
-      </Card>
-      <Card><h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:22,letterSpacing:2,color:C.gold,marginBottom:12}}>ADD-ONS & EXTRAS</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>{AD.map(e=><div key={e.name} style={{background:C.bg,borderRadius:8,padding:10,border:`1px solid ${C.border}`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:13,fontWeight:700}}>{e.name}</span><span style={{fontSize:13,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{e.price}</span></div></div>)}</div></Card>
+          <Btn variant="ghost" onClick={addInc} style={{fontSize:12}}>+ Add included item</Btn>
+        </Card>
+        <Card style={{marginBottom:12}}>
+          <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Not Included (optional)</h4>
+          {form.excludes.map((ex,i)=>(
+            <div key={i} style={{display:"flex",gap:6,marginBottom:8}}>
+              <input value={ex} placeholder="e.g. Moving heads" onChange={e=>setExc(i,e.target.value)} style={{flex:1}}/>
+              <button onClick={()=>remExc(i)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"8px 10px",fontSize:12,cursor:"pointer"}}>✕</button>
+            </div>
+          ))}
+          <Btn variant="ghost" onClick={addExc} style={{fontSize:12}}>+ Add not-included item</Btn>
+        </Card>
+        <div style={{display:"flex",gap:10}}><Btn onClick={savePkg} disabled={busy}>{busy?"Saving…":"💾 Save Package"}</Btn><Btn variant="ghost" onClick={cancel}>Cancel</Btn></div>
+      </div>
+    );
+  }
+
+  const sorted=[...packages].sort((a,b)=>(a.position||0)-(b.position||0));
+  return(
+    <div style={{animation:"slideIn 0.3s ease"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
+        <div><h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Packages</h2><p style={{color:C.muted,fontSize:12}}>Edit your pricing & what's included</p></div>
+        <Btn onClick={startNew}>+ Add Package</Btn>
+      </div>
+      {sorted.length===0&&<Card style={{textAlign:"center",color:C.muted,marginBottom:20}}>No packages yet. Tap "+ Add Package" to create your first one.</Card>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,marginBottom:20}}>
+        {sorted.map(pk=>{
+          const accent=colOf(pk.color);
+          return(
+            <Card key={pk.id} style={{border:`2px solid ${accent===C.muted?C.border:accent}`,opacity:pk.active===false?0.55:1}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6,marginBottom:6}}>
+                <div>{pk.tag&&<div style={{fontSize:10,fontWeight:800,color:accent===C.muted?C.muted:accent,letterSpacing:1,marginBottom:3}}>{pk.tag}</div>}<div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:22,letterSpacing:2,color:C.text}}>{pk.name}</div></div>
+                {pk.active===false&&<Badge label="Hidden" color={C.muted}/>}
+              </div>
+              <p style={{fontSize:12,color:C.muted,marginBottom:8}}>{pk.tagline}</p>
+              <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:34,color:accent===C.muted?C.text:accent,lineHeight:1}}>{fmt$(pk.price)}</div>
+              <div style={{fontSize:11,color:C.muted,marginBottom:10}}>{pk.hours} · inc GST</div>
+              <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:10}}>
+                {(pk.includes||[]).slice(0,6).map((it,i)=><div key={i} style={{fontSize:12}}><span style={{color:C.green}}>✓ </span>{it.name}</div>)}
+                {(pk.includes||[]).length>6&&<div style={{fontSize:11,color:C.dim}}>+{pk.includes.length-6} more…</div>}
+              </div>
+              <div style={{display:"flex",gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
+                <Btn onClick={()=>startEdit(pk)} style={{fontSize:12,flex:1}}>✏️ Edit</Btn>
+                <Btn variant="ghost" onClick={()=>delPkg(pk)} style={{fontSize:12,color:C.coral}}>Delete</Btn>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      <AddonsEditor addons={addons} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>
     </div>
+  );
+}
+
+function AddonsEditor({addons,onSaveAddon,onDeleteAddon}){
+  const [name,setName]=useState("");const [price,setPrice]=useState("");const [busy,setBusy]=useState(false);
+  const sorted=[...addons].sort((a,b)=>(a.position||0)-(b.position||0));
+  const add=async()=>{
+    if(!name.trim())return;
+    const lastPos=sorted.length?sorted[sorted.length-1].position||0:0;
+    setBusy(true);
+    try{await onSaveAddon({name:name.trim(),price:price.trim()||"POA",position:lastPos+1,active:true});setName("");setPrice("");}
+    catch(e){alert("Couldn't add add-on: "+(e.message||e));}
+    setBusy(false);
+  };
+  const del=async a=>{try{await onDeleteAddon(a.id);}catch(e){alert("Couldn't delete: "+(e.message||e));}};
+  return(
+    <Card>
+      <h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:22,letterSpacing:2,color:C.gold,marginBottom:12}}>Add-ons & Extras</h3>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+        {sorted.map(a=>(
+          <div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.bg,borderRadius:8,padding:"8px 12px",border:`1px solid ${C.border}`}}>
+            <span style={{fontSize:13,fontWeight:600}}>{a.name}</span>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:13,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{a.price}</span>
+              <button onClick={()=>del(a)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>✕</button>
+            </div>
+          </div>
+        ))}
+        {sorted.length===0&&<div style={{fontSize:12,color:C.dim}}>No add-ons yet.</div>}
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        <input value={name} placeholder="Add-on name" onChange={e=>setName(e.target.value)} style={{flex:2,minWidth:120}}/>
+        <input value={price} placeholder="Price (e.g. $400)" onChange={e=>setPrice(e.target.value)} style={{flex:1,minWidth:90}}/>
+        <Btn onClick={add} disabled={busy} style={{fontSize:13}}>+ Add</Btn>
+      </div>
+    </Card>
   );
 }
 
@@ -1534,6 +1654,8 @@ export default function App(){
   const [clients,setClients]=useState([]);
   const [invoices,setInvoices]=useState([]);
   const [djs,setDjs]=useState([]);
+  const [packages,setPackages]=useState([]);
+  const [addons,setAddons]=useState([]);
   const [biz,setBiz]=useState(DEFAULT_BIZ);
   const [tab,setTab]=useState("dashboard");
   const [exportStatus,setExportStatus]=useState("");
@@ -1550,8 +1672,8 @@ export default function App(){
   const loadAll=useCallback(async()=>{
     setLoading(true);setDataError("");
     try{
-      const [c,i,d,b]=await Promise.all([listClients(),listInvoices(),listDjs(),getSettings()]);
-      setClients(c);setInvoices(i);setDjs(d);if(b)setBiz(b);
+      const [c,i,d,b,pk,ad]=await Promise.all([listClients(),listInvoices(),listDjs(),getSettings(),listPackages().catch(()=>[]),listAddons().catch(()=>[])]);
+      setClients(c);setInvoices(i);setDjs(d);if(b)setBiz(b);setPackages(pk);setAddons(ad);
     }catch(e){setDataError(e.message||"Couldn't load your data.");}
     setLoading(false);
   },[]);
@@ -1589,6 +1711,18 @@ export default function App(){
   const onToggleDj=async dj=>{const saved=await saveDj({...dj,available:!dj.available});setDjs(prev=>prev.map(x=>x.id===saved.id?saved:x));};
   const onSaveBiz=async b=>{const saved=await saveSettings(b);setBiz(saved);return saved;};
   const onSubmitLead=async lead=>{await onSaveClient(lead);};
+  const onSavePackage=async p=>{
+    const saved=await savePackage(p);
+    setPackages(prev=>prev.some(x=>x.id===saved.id)?prev.map(x=>x.id===saved.id?saved:x):[...prev,saved]);
+    return saved;
+  };
+  const onDeletePackage=async id=>{await deletePackage(id);setPackages(prev=>prev.filter(x=>x.id!==id));};
+  const onSaveAddon=async a=>{
+    const saved=await saveAddon(a);
+    setAddons(prev=>prev.some(x=>x.id===saved.id)?prev.map(x=>x.id===saved.id?saved:x):[...prev,saved]);
+    return saved;
+  };
+  const onDeleteAddon=async id=>{await deleteAddon(id);setAddons(prev=>prev.filter(x=>x.id!==id));};
 
   const logout=async()=>{try{await supabase.auth.signOut();}catch(e){}};
 
@@ -1625,7 +1759,7 @@ export default function App(){
             {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
             {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj}/>}
             {tab==="content"&&<Content/>}
-            {tab==="packages"&&<Packages/>}
+            {tab==="packages"&&<Packages packages={packages} addons={addons} onSavePackage={onSavePackage} onDeletePackage={onDeletePackage} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>}
             {tab==="settings"&&<Settings biz={biz} onSaveBiz={onSaveBiz}/>}
             {tab==="getintouch"&&<GetInTouch biz={biz} onSubmitLead={onSubmitLead} embedded={true}/>}
           </>

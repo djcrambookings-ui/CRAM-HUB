@@ -336,3 +336,133 @@ export async function saveSettings(b) {
   if (error) throw error;
   return rowToBiz(data);
 }
+
+// ---------------- PACKAGES ----------------
+function rowToPackage(r) {
+  return {
+    id: r.id,
+    position: r.position ?? 0,
+    name: r.name || "",
+    tagline: r.tagline || "",
+    price: r.price ?? 0,
+    hours: r.hours || "",
+    tag: r.tag || "",
+    color: r.color || "muted",
+    cta: r.cta || "Book Now",
+    includes: Array.isArray(r.includes) ? r.includes : [],
+    excludes: Array.isArray(r.excludes) ? r.excludes : [],
+    active: r.active !== false,
+  };
+}
+
+function packageToRow(p) {
+  return {
+    position: Number(p.position) || 0,
+    name: p.name || "",
+    tagline: p.tagline || "",
+    price: Number(p.price) || 0,
+    hours: p.hours || "",
+    tag: p.tag || "",
+    color: p.color || "muted",
+    cta: p.cta || "Book Now",
+    includes: Array.isArray(p.includes) ? p.includes : [],
+    excludes: Array.isArray(p.excludes) ? p.excludes : [],
+    active: p.active !== false,
+  };
+}
+
+export async function listPackages() {
+  assertReady();
+  const { data, error } = await supabase
+    .from("packages")
+    .select("*")
+    .order("position", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(rowToPackage);
+}
+
+export async function savePackage(p) {
+  assertReady();
+  const row = packageToRow(p);
+  if (isExistingId(p.id)) {
+    const { data, error } = await supabase
+      .from("packages")
+      .update(row)
+      .eq("id", p.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return rowToPackage(data);
+  }
+  const { data, error } = await supabase
+    .from("packages")
+    .insert(row)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return rowToPackage(data);
+}
+
+export async function deletePackage(id) {
+  assertReady();
+  const { error } = await supabase.from("packages").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ---------------- ADD-ONS ----------------
+function rowToAddon(r) {
+  return {
+    id: r.id,
+    position: r.position ?? 0,
+    name: r.name || "",
+    price: r.price || "",
+    active: r.active !== false,
+  };
+}
+
+function addonToRow(a) {
+  return {
+    position: Number(a.position) || 0,
+    name: a.name || "",
+    price: a.price || "",
+    active: a.active !== false,
+  };
+}
+
+export async function listAddons() {
+  assertReady();
+  const { data, error } = await supabase
+    .from("addons")
+    .select("*")
+    .order("position", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(rowToAddon);
+}
+
+export async function saveAddon(a) {
+  assertReady();
+  const row = addonToRow(a);
+  if (isExistingId(a.id)) {
+    const { data, error } = await supabase
+      .from("addons")
+      .update(row)
+      .eq("id", a.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return rowToAddon(data);
+  }
+  const { data, error } = await supabase
+    .from("addons")
+    .insert(row)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return rowToAddon(data);
+}
+
+export async function deleteAddon(id) {
+  assertReady();
+  const { error } = await supabase.from("addons").delete().eq("id", id);
+  if (error) throw error;
+}
