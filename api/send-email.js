@@ -6,6 +6,7 @@
 //   GMAIL_APP_PASSWORD  = the 16-char App Password from your Google account
 import nodemailer from "nodemailer";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { LOGO_W_B64 } from "./_logo.js";
 
 const money = (n) =>
   "$" + Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -58,7 +59,15 @@ export async function buildInvoicePdf(inv, biz) {
 
   // Header band
   page.drawRectangle({ x: 0, y: height - 110, width, height: 110, color: dark });
-  T(biz.name || "C-RAM Entertainment", M, height - 52, { size: 20, bold: true, color: white });
+  // Logo (white version) on the left, vertically centred in the band.
+  let logoDrawn = false;
+  try {
+    const logo = await doc.embedPng(Buffer.from(LOGO_W_B64, "base64"));
+    const lh = 42, lw = lh * (logo.width / logo.height);
+    page.drawImage(logo, { x: M, y: height - 110 + (110 - lh) / 2, width: lw, height: lh });
+    logoDrawn = true;
+  } catch (e) { /* fall back to business name text */ }
+  if (!logoDrawn) T(biz.name || "C-RAM Entertainment", M, height - 52, { size: 20, bold: true, color: white });
   TR("TAX INVOICE", width - M, height - 48, { size: 22, bold: true, color: gold });
   TR(inv.id || "", width - M, height - 72, { size: 12, bold: true, color: white });
 
