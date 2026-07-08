@@ -487,16 +487,17 @@ ${biz.name}`;
           subject,
           text: body,
           html: buildHtml(),
-          replyTo: biz.email || undefined,
+          invoice: inv,   // server generates + attaches the PDF from this
+          biz,
         }),
       });
       if (res.status === 404) {
         setStatus("error");
-        setErrorMsg("The email backend isn't running in this preview. Send Now works once the app is deployed (or run locally with vercel dev) — see the README. Until then, the Open in Gmail button below is a no-setup fallback.");
+        setErrorMsg("Direct send isn't set up on this version yet. Use the Open in Gmail button below, or connect your Gmail (Vercel env vars) to send with the PDF attached.");
         return;
       }
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setStatus("error"); setErrorMsg(data.error || `Send failed (${res.status}). Check that RESEND_API_KEY is set on the server.`); return; }
+      if (!res.ok) { setStatus("error"); setErrorMsg(data.error || `Couldn't send (${res.status}). If it mentions GMAIL_USER / GMAIL_APP_PASSWORD, add those in Vercel and redeploy.`); return; }
       setStatus("sent");
       onSent && onSent();
       setTimeout(() => { onClose && onClose(); }, 1400);
