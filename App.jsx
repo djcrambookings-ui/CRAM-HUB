@@ -318,13 +318,15 @@ function downloadInvoicePDF(inv, biz, onDone) {
 async function exportAllToExcel(clients, invoices, djs, biz){
   const num = n => Number(n)||0;
 
+  // Tag each invoice with its financial year
   const invSummary = invoices.map(inv=>{
     const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
     const gst = subtotal*0.1;
     return {
-      "Invoice #": inv.id, "Client": inv.client, "Client Email": inv.clientEmail||"",
+      "FY": getFY(inv.date)||"", "Invoice #": inv.id, "Client": inv.client, "Client Email": inv.clientEmail||"",
       "Client Phone": inv.clientPhone||"", "Client ABN": inv.clientABN||"",
       "Date": inv.date||"", "Due": inv.due||"", "Status": inv.status||"",
+      "Paid Date": inv.paidDate||"",
       "Subtotal (ex GST)": num(subtotal), "GST (10%)": num(gst), "Total (inc GST)": num(subtotal+gst),
       "Payment Ref": inv.paymentRef||inv.id, "Notes": inv.notes||""
     };
@@ -333,7 +335,7 @@ async function exportAllToExcel(clients, invoices, djs, biz){
   const lineItems = [];
   invoices.forEach(inv=>inv.items.forEach(it=>{
     lineItems.push({
-      "Invoice #": inv.id, "Client": inv.client,
+      "FY": getFY(inv.date)||"", "Invoice #": inv.id, "Client": inv.client,
       "Description": it.desc||it.catalogueLabel||"",
       "Qty": num(it.qty), "Rate (ex GST)": num(it.rate),
       "Amount (ex GST)": num(it.qty)*num(it.rate)
@@ -341,9 +343,9 @@ async function exportAllToExcel(clients, invoices, djs, biz){
   }));
 
   const clientRows = clients.map(c=>({
-    "Name": c.name||"", "Type": c.type||"", "Status": c.status||"",
+    "FY": getFY(c.eventDate)||"", "Name": c.name||"", "Type": c.type||"", "Status": c.status||"",
     "Phone": c.phone||"", "Email": c.email||"", "Event Date": c.eventDate||"",
-    "Venue": c.venue||"", "Quoted Value": num(c.value), "Paid": c.paid?"Yes":"No",
+    "Venue": c.venue||"", "Quoted Value": num(c.value), "Amount Paid": num(c.paid),
     "ABN": c.abn||"", "Source": c.source||"", "Notes": c.notes||""
   }));
 
@@ -359,6 +361,34 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     "Account Name":biz.accountName,"Account No.":biz.account,"Instagram":biz.instagram,"Mixcloud":biz.mixcloud
   }).map(([k,v])=>({Field:k, Value:v||""}));
 
+  // ── EOFY SUMMARY (one row per financial year) ──
+  const fySet = new Set();
+  invoices.forEach(i=>{const f=getFY(i.date);if(f)fySet.add(f);});
+  clients.forEach(c=>{const f=getFY(c.eventDate);if(f)fySet.add(f);});
+  const fyList = [...fySet].sort().reverse();
+  const eofySummary = fyList.map(fy=>{
+    const fyInvs = invoices.filter(i=>getFY(i.date)===fy);
+    const fyClients = clients.filter(c=>getFY(c.eventDate)===fy);
+    const paidInvs = fyInvs.filter(i=>i.status==="Paid");
+    const totalIncome = paidInvs.reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0),0);
+    const totalGST = totalIncome*0.1;
+    const totalIncGST = totalIncome+totalGST;
+    const outstandingInvs = fyInvs.filter(i=>i.status!=="Paid"&&i.status!=="Draft");
+    const outstandingTotal = outstandingInvs.reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
+    return {
+      "Financial Year": fy,
+      "Total Invoices": fyInvs.length,
+      "Invoices Paid": paidInvs.length,
+      "Income (ex GST)": num(totalIncome),
+      "GST Collected": num(totalGST),
+      "Income (inc GST)": num(totalIncGST),
+      "Outstanding (inc GST)": num(outstandingTotal),
+      "Clients": fyClients.length,
+      "Confirmed Gigs": fyClients.filter(c=>c.status==="Confirmed").length,
+      "ABN": biz.abn||"NOT SET — add in Settings",
+    };
+  });
+
   const today = new Date().toISOString().slice(0,10);
   const fname = "C-RAM-Records-" + today;
 
@@ -366,6 +396,7 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     const mod = await import("xlsx");
     const XLSX = mod.utils ? mod : (mod.default || mod);
     const wb = XLSX.utils.book_new();
+    if(eofySummary.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(eofySummary), "EOFY Summary");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientRows), "Clients");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invSummary), "Invoices");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lineItems), "Invoice Line Items");
@@ -374,14 +405,13 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     XLSX.writeFile(wb, fname + ".xlsx");
     return {ok:true, format:"xlsx"};
   } catch(e) {
-    // Fallback: one CSV with every section — opens in Excel, needs no library.
     const esc = v => { const s=String(v==null?"":v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
     const section = (title, rows) => {
       if(!rows.length) return title+"\n(no records)\n\n";
       const headers = Object.keys(rows[0]);
       return title+"\n"+[headers.join(",")].concat(rows.map(r=>headers.map(h=>esc(r[h])).join(","))).join("\n")+"\n\n";
     };
-    const csv = section("CLIENTS",clientRows)+section("INVOICES",invSummary)+section("INVOICE LINE ITEMS",lineItems)+section("DJ ROSTER",djRows)+section("BUSINESS DETAILS",bizRows);
+    const csv = section("EOFY SUMMARY",eofySummary)+section("CLIENTS",clientRows)+section("INVOICES",invSummary)+section("INVOICE LINE ITEMS",lineItems)+section("DJ ROSTER",djRows)+section("BUSINESS DETAILS",bizRows);
     const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -550,22 +580,49 @@ ${biz.name}`;
   );
 }
 
+// ── FINANCIAL YEAR HELPERS (AU: 1 Jul – 30 Jun) ─────────────────
+// getFY("2026-03-15") → "FY 2025-26"  (falls in July 2025 – June 2026)
+// getFY("2026-08-01") → "FY 2026-27"
+function getFY(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr);if(isNaN(d))return null;
+  const m=d.getMonth(),y=d.getFullYear(); // m is 0-based; Jul=6
+  const startYear=m>=6?y:y-1;
+  return "FY "+startYear+"-"+String(startYear+1).slice(2);
+}
+function currentFY(){const n=new Date(),m=n.getMonth(),y=n.getFullYear();const s=m>=6?y:y-1;return "FY "+s+"-"+String(s+1).slice(2);}
+function allFYs(clients,invoices){
+  const s=new Set();
+  clients.forEach(c=>{const f=getFY(c.eventDate);if(f)s.add(f);});
+  invoices.forEach(i=>{const f=getFY(i.date);if(f)s.add(f);});
+  s.add(currentFY());
+  return [...s].sort().reverse();
+}
+function invTotal(inv){return inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1;}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────
-function Dashboard({clients,invoices,setTab}){
-  const paid=invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
-  const outstanding=invoices.filter(i=>i.status!=="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
-  const confirmed=clients.filter(c=>c.status==="Confirmed").length;
-  const leads=clients.filter(c=>["Lead","Inquiry","Opportunity"].includes(c.status)).length;
-  const upcoming=[...clients].filter(c=>c.eventDate).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,6);
-  const overdue=invoices.filter(i=>i.status==="Overdue");
+function Dashboard({clients,invoices,djs,setTab}){
+  const [fy,setFy]=useState(currentFY());
+  const years=allFYs(clients,invoices);
+  const fyInvoices=invoices.filter(i=>getFY(i.date)===fy);
+  const fyClients=clients.filter(c=>getFY(c.eventDate)===fy);
+  const paid=fyInvoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+invTotal(i),0);
+  const outstanding=fyInvoices.filter(i=>i.status!=="Paid"&&i.status!=="Draft").reduce((s,i)=>s+invTotal(i),0);
+  const gstCollected=fyInvoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*0.1,0);
+  const confirmed=fyClients.filter(c=>c.status==="Confirmed").length;
+  const leads=fyClients.filter(c=>["Lead","Inquiry","Opportunity"].includes(c.status)).length;
+  const upcoming=[...fyClients].filter(c=>c.eventDate&&new Date(c.eventDate)>=new Date()).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,6);
+  const overdue=fyInvoices.filter(i=>i.status==="Overdue");
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
       <div style={{textAlign:"center",marginBottom:22}}>
         <LogoW height={72}/>
         <p style={{color:C.muted,fontSize:13,marginTop:10}}>Business Command Centre — Melbourne, VIC</p>
-        <div style={{display:"inline-flex",gap:8,marginTop:8,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 14px",alignItems:"center"}}>
-          <span style={{width:7,height:7,borderRadius:"50%",background:C.green,display:"inline-block"}}/>
-          <span style={{fontSize:12,color:C.green,fontWeight:600}}>Gmail Connected</span>
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:10,flexWrap:"wrap",alignItems:"center"}}>
+          <select value={fy} onChange={e=>setFy(e.target.value)} style={{background:C.surface,color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:8,padding:"5px 12px",fontSize:13,fontWeight:700,fontFamily:"Bebas Neue,sans-serif",letterSpacing:1}}>
+            {years.map(y=><option key={y} value={y}>{y}</option>)}
+          </select>
+          <span style={{fontSize:11,color:C.dim}}>{fy===currentFY()?"Current year":"Past year"}</span>
         </div>
       </div>
       {overdue.length>0&&(
@@ -579,7 +636,7 @@ function Dashboard({clients,invoices,setTab}){
         </div>
       )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-        {[{v:fmt$(paid),l:"Revenue Collected",col:C.green,tab:"invoices"},{v:fmt$(outstanding),l:"Outstanding",col:C.coral,tab:"invoices"},{v:confirmed,l:"Confirmed Gigs",col:C.purple,tab:"crm"},{v:leads,l:"Active Leads",col:C.gold,tab:"crm"},{v:3,l:"DJ Roster",col:C.gold,tab:"roster"}].map(k=>(
+        {[{v:fmt$(paid),l:"Revenue Collected",col:C.green,tab:"invoices"},{v:fmt$(outstanding),l:"Outstanding",col:C.coral,tab:"invoices"},{v:fmt$(gstCollected),l:"GST Collected",col:C.gold,tab:"invoices"},{v:confirmed,l:"Confirmed Gigs",col:C.purple,tab:"crm"},{v:leads,l:"Active Leads",col:C.gold,tab:"crm"},{v:djs.length,l:"DJ Roster",col:C.gold,tab:"roster"}].map(k=>(
           <div key={k.l} onClick={()=>setTab(k.tab)} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:16,textAlign:"center",cursor:"pointer"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor=k.col}
             onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
@@ -591,6 +648,7 @@ function Dashboard({clients,invoices,setTab}){
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
         <Card>
           <h3 style={{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Upcoming Events</h3>
+          {upcoming.length===0&&<div style={{fontSize:12,color:C.dim}}>No upcoming events this FY.</div>}
           {upcoming.map(c=>(
             <div key={c.id} onClick={()=>setTab("crm")} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer"}}>
               <div><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:C.muted}}>{c.venue||"Venue TBC"}</div></div>
@@ -1699,7 +1757,9 @@ export default function App(){
   };
   const onDeleteInvoice=async inv=>{await deleteInvoice(inv);setInvoices(prev=>prev.filter(x=>x.id!==inv.id));};
   const onSetInvoiceStatus=async(inv,status)=>{
-    const saved=await saveInvoice({...inv,status});
+    const update={...inv,status};
+    if(status==="Paid"&&!inv.paidDate){update.paidDate=new Date().toISOString().split("T")[0];}
+    const saved=await saveInvoice(update);
     setInvoices(prev=>prev.map(x=>x.id===saved.id?saved:x));
     return saved;
   };
@@ -1754,7 +1814,7 @@ export default function App(){
           <div style={{textAlign:"center",color:C.muted,padding:"60px 0"}}>Loading your data…</div>
         ):(
           <>
-            {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} setTab={setTab}/>}
+            {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} djs={djs} setTab={setTab}/>}
             {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab}/>}
             {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
             {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj}/>}

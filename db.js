@@ -115,6 +115,7 @@ function rowToInvoice(r, items) {
     status: r.status || "Draft",
     notes: r.notes || "",
     paymentRef: r.payment_ref || "",
+    paidDate: r.paid_date || "",
     items: (items || []).map((it) => ({
       catalogueLabel: it.catalogue_label || "",
       desc: it.descr || "",
@@ -136,6 +137,7 @@ function invoiceToRow(inv) {
     status: inv.status || "Draft",
     notes: inv.notes || "",
     payment_ref: inv.paymentRef || "",
+    paid_date: dateOrNull(inv.paidDate),
   };
 }
 
