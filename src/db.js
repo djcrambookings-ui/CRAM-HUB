@@ -115,6 +115,7 @@ function rowToInvoice(r, items) {
     status: r.status || "Draft",
     notes: r.notes || "",
     paymentRef: r.payment_ref || "",
+    paidDate: r.paid_date || "",
     items: (items || []).map((it) => ({
       catalogueLabel: it.catalogue_label || "",
       desc: it.descr || "",
@@ -136,6 +137,7 @@ function invoiceToRow(inv) {
     status: inv.status || "Draft",
     notes: inv.notes || "",
     payment_ref: inv.paymentRef || "",
+    paid_date: dateOrNull(inv.paidDate),
   };
 }
 
@@ -464,69 +466,5 @@ export async function saveAddon(a) {
 export async function deleteAddon(id) {
   assertReady();
   const { error } = await supabase.from("addons").delete().eq("id", id);
-  if (error) throw error;
-}
-
-// ---------------- REVIEWS ----------------
-function rowToReview(r) {
-  return {
-    id: r.id,
-    position: r.position ?? 0,
-    author: r.author || "",
-    source: r.source || "google",
-    rating: r.rating ?? 5,
-    review: r.review || "",
-    eventType: r.event_type || "",
-    active: r.active !== false,
-  };
-}
-
-function reviewToRow(r) {
-  return {
-    position: Number(r.position) || 0,
-    author: r.author || "",
-    source: r.source || "google",
-    rating: Math.max(1, Math.min(5, Number(r.rating) || 5)),
-    review: r.review || "",
-    event_type: r.eventType || "",
-    active: r.active !== false,
-  };
-}
-
-export async function listReviews() {
-  assertReady();
-  const { data, error } = await supabase
-    .from("reviews")
-    .select("*")
-    .order("position", { ascending: true });
-  if (error) throw error;
-  return (data || []).map(rowToReview);
-}
-
-export async function saveReview(r) {
-  assertReady();
-  const row = reviewToRow(r);
-  if (isExistingId(r.id)) {
-    const { data, error } = await supabase
-      .from("reviews")
-      .update(row)
-      .eq("id", r.id)
-      .select("*")
-      .single();
-    if (error) throw error;
-    return rowToReview(data);
-  }
-  const { data, error } = await supabase
-    .from("reviews")
-    .insert(row)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return rowToReview(data);
-}
-
-export async function deleteReview(id) {
-  assertReady();
-  const { error } = await supabase.from("reviews").delete().eq("id", id);
   if (error) throw error;
 }

@@ -11,3 +11,7 @@
 
 alter table public.clients
   add column if not exists amount_paid numeric default 0;
+
+-- Track the date each invoice was actually paid (for which FY income falls in)
+alter table public.invoices
+  add column if not exists paid_date date;

@@ -7,7 +7,6 @@ import {
   getSettings, saveSettings,
   listPackages, savePackage, deletePackage,
   listAddons, saveAddon, deleteAddon,
-  listReviews, saveReview, deleteReview,
 } from "./db";
 
 // One-shot hand-off used to deep-link an invoice from the CRM tab to the Invoices tab.
@@ -41,13 +40,6 @@ const css = `
   @keyframes eq1{0%,100%{height:8px}50%{height:22px}}@keyframes eq2{0%,100%{height:18px}50%{height:8px}}@keyframes eq3{0%,100%{height:12px}50%{height:28px}}@keyframes eq4{0%,100%{height:22px}50%{height:10px}}@keyframes eq5{0%,100%{height:6px}50%{height:20px}}
   @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .li-row{display:grid;grid-template-columns:1fr 68px 120px 36px;gap:8px;align-items:center;margin-bottom:8px;}
-  .li-lbl{display:none;font-size:10px;font-weight:700;color:${C.muted};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
-  @media(max-width:560px){
-    .li-row{grid-template-columns:1fr 1fr 40px;}
-    .li-pick{grid-column:1/-1;}
-    .li-lbl{display:block;}
-  }
 `;
 
 const fmt$ = n => "$"+Number(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -89,25 +81,6 @@ PACKAGES.forEach(pkg=>{
 });
 ADDONS_LIST.forEach(a=>CATALOGUE.push({group:"Add-Ons & Extras",label:a.label,desc:"",rate:a.exGST}));
 
-// Build the invoice line-item picker from YOUR live packages/add-ons (the ones
-// you manage in the Packages tab). Package prices are inc-GST, so line-item
-// rates are price/1.1 (ex-GST) — the invoice's GST line then lands back on the
-// advertised inc-GST total. Falls back to the built-in CATALOGUE if none loaded.
-function buildCatalogue(packages, addons){
-  const cat=[];
-  const exGst=v=>{const n=Number(v); return n>0?Math.round((n/1.1)*100)/100:0;};
-  (packages||[]).filter(p=>p.active!==false).forEach(pkg=>{
-    const incNames=(pkg.includes||[]).map(i=>(i&&i.name)||i).filter(Boolean);
-    cat.push({group:"Packages",label:pkg.name+(pkg.hours?" — "+pkg.hours:""),desc:(pkg.tagline||"")+(incNames.length?". Includes: "+incNames.join(", ")+".":""),rate:exGst(pkg.price),tag:pkg.tag});
-    (pkg.includes||[]).forEach(inc=>{ if(inc&&inc.name) cat.push({group:(pkg.name||"").replace("THE ","")+" Inclusions",label:inc.name,desc:inc.detail||"",rate:0}); });
-  });
-  (addons||[]).filter(a=>a.active!==false).forEach(a=>{
-    const m=String(a.price||"").match(/([\d,]+(?:\.\d+)?)/);
-    cat.push({group:"Add-Ons & Extras",label:a.name+(a.price?` (${a.price})`:""),desc:"",rate:m?exGst(Number(m[1].replace(/,/g,""))):0});
-  });
-  return cat.length?cat:CATALOGUE;
-}
-
 const DEFAULT_BIZ={name:"C-RAM Entertainment",abn:"",address:"Melbourne, VIC 3000",phone:"0432 775 402",email:"djc.ram.bookings@gmail.com",website:"c-rament.com.au",bsb:"",account:"",accountName:"C-RAM Entertainment",bank:"",instagram:"@djc_ram",mixcloud:"mixcloud.com/DJC_RAM"};
 
 const SEED_CLIENTS=[
@@ -136,20 +109,20 @@ const CONTENT={
   corporate:[{type:"LinkedIn Pitch",platform:"LinkedIn",content:"Corporate events deserve more than a Spotify playlist.\n\nC-RAM Entertainment for product launches, end-of-year celebrations, gala dinners and brand activations.\n\nDM or visit c-rament.com.au"}],
   festivals:[{type:"Instagram Caption",platform:"Instagram",content:"Festival season is alive.\n\nNothing hits like an open air set when the crowd locks in.\nThis is where the MUCKIN magic happens.\n\nEnquire: c-rament.com.au\n\n#MelbourneDJ #FestivalDJ #OpenFormat #DJCRam"}],
 };
-const NAV=[{id:"dashboard",label:"Dashboard",icon:"⚡"},{id:"crm",label:"CRM",icon:"👥"},{id:"invoices",label:"Invoices",icon:"🧾"},{id:"roster",label:"DJ Roster",icon:"🎧"},{id:"packages",label:"Packages",icon:"🎶"},{id:"reviews",label:"Reviews",icon:"⭐"},{id:"emails",label:"Emails",icon:"✉️"},{id:"settings",label:"Settings",icon:"⚙️"},{id:"getintouch",label:"Get in Touch",icon:"📬"}];
+const NAV=[{id:"dashboard",label:"Dashboard",icon:"⚡"},{id:"crm",label:"CRM",icon:"👥"},{id:"invoices",label:"Invoices",icon:"🧾"},{id:"roster",label:"DJ Roster",icon:"🎧"},{id:"content",label:"Content",icon:"📣"},{id:"packages",label:"Packages",icon:"🎶"},{id:"settings",label:"Settings",icon:"⚙️"},{id:"getintouch",label:"Get in Touch",icon:"📬"}];
 
 // ── LINE ITEM ROW ─────────────────────────────────────────────────
-function LineItemRow({item,idx,onChange,onPick,onRemove,catalogue=CATALOGUE}){
+function LineItemRow({item,idx,onChange,onRemove}){
   const [open,setOpen]=useState(false);const [q,setQ]=useState("");
   const groups={};
-  catalogue.filter(c=>{const s=q.toLowerCase();return !s||c.label.toLowerCase().includes(s)||(c.desc||"").toLowerCase().includes(s);})
+  CATALOGUE.filter(c=>{const s=q.toLowerCase();return !s||c.label.toLowerCase().includes(s)||(c.desc||"").toLowerCase().includes(s);})
     .forEach(c=>{if(!groups[c.group])groups[c.group]=[];groups[c.group].push(c);});
   const gCol=g=>g.includes("ESSENTIAL")?C.muted:g.includes("SIGNATURE")?C.gold:g.includes("PREMIUM")?C.coral:g==="Packages"?C.gold:g.includes("Add")?C.purple:C.muted;
-  const pick=cat=>{onPick(idx,cat);setOpen(false);setQ("");};
+  const pick=cat=>{onChange(idx,"catalogueLabel",cat.label);onChange(idx,"desc",cat.desc||cat.label);if(cat.rate>0)onChange(idx,"rate",String(cat.rate));setOpen(false);setQ("");};
   return(
     <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:12,marginBottom:10}}>
-      <div className="li-row">
-        <div className="li-pick" style={{position:"relative"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 60px 120px 34px",gap:8,marginBottom:8,alignItems:"center"}}>
+        <div style={{position:"relative"}}>
           <div onClick={()=>setOpen(!open)} style={{background:C.surface,border:`1px solid ${open?C.gold:C.border}`,borderRadius:8,padding:"9px 36px 9px 12px",fontSize:13,cursor:"pointer",color:item.catalogueLabel?C.text:C.muted,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"relative"}}>
             {item.catalogueLabel||"Select package or service..."}
             <span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontSize:10}}>{open?"▲":"▼"}</span>
@@ -180,9 +153,9 @@ function LineItemRow({item,idx,onChange,onPick,onRemove,catalogue=CATALOGUE}){
             </div>
           )}
         </div>
-        <div><span className="li-lbl">Qty</span><input type="number" min="1" style={{textAlign:"right",fontSize:13}} value={item.qty} onChange={e=>onChange(idx,"qty",e.target.value)}/></div>
-        <div><span className="li-lbl">Rate ex GST</span><input type="number" min="0" step="0.01" style={{textAlign:"right",fontSize:13}} placeholder="0.00" value={item.rate} onChange={e=>onChange(idx,"rate",e.target.value)}/></div>
-        <button onClick={()=>onRemove(idx)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"7px",fontSize:12,alignSelf:"end",height:38}}>✕</button>
+        <input type="number" min="1" style={{textAlign:"right",fontSize:13}} value={item.qty} onChange={e=>onChange(idx,"qty",e.target.value)}/>
+        <input type="number" min="0" step="0.01" style={{textAlign:"right",fontSize:13}} placeholder="0.00" value={item.rate} onChange={e=>onChange(idx,"rate",e.target.value)}/>
+        <button onClick={()=>onRemove(idx)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"7px",fontSize:12}}>✕</button>
       </div>
       <div>
         <label style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:0.5}}>Description on Invoice</label>
@@ -215,26 +188,17 @@ function generateInvoicePDF(inv, biz) {
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  body{font-family:'Inter',sans-serif;color:#111;background:#fff;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;color:#111;background:#fff;padding:0;}
   .page{max-width:680px;margin:0 auto;padding:40px;}
-  .info{display:flex;justify-content:space-between;gap:20px;}
-  .info>div{min-width:0;}
-  .info *{overflow-wrap:anywhere;word-break:break-word;}
-  @media screen and (max-width:600px){
-    .page{padding:14px;}
-    .info{flex-direction:column;gap:14px;}
-    .billto{text-align:left !important;}
-  }
   @media print{.page{padding:20px;max-width:100%;}}
 </style>
 </head><body><div class="page">
   <!-- HEADER BAND -->
-  <div style="background:#0A0A0F;padding:28px 32px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
-    <img src="${LOGO_W}" style="height:52px;max-width:100%;object-fit:contain" alt="C-RAM Entertainment"/>
+  <div style="background:#0A0A0F;padding:28px 32px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <img src="${LOGO_W}" style="height:52px;object-fit:contain" alt="C-RAM Entertainment"/>
     <div style="text-align:right">
       <div style="font-size:28px;font-weight:900;color:#F5C518;letter-spacing:3px;line-height:1">TAX INVOICE</div>
       <div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">${inv.id}</div>
@@ -248,7 +212,7 @@ function generateInvoicePDF(inv, biz) {
   </div>
 
   <!-- BUSINESS + CLIENT INFO -->
-  <div class="info" style="background:#F9F9F9;padding:24px 32px;border-left:1px solid #eee;border-right:1px solid #eee">
+  <div style="background:#F9F9F9;padding:24px 32px;display:flex;justify-content:space-between;gap:20px;border-left:1px solid #eee;border-right:1px solid #eee">
     <div>
       <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">From</div>
       <div style="font-weight:700;font-size:15px;color:#111">${biz.name}</div>
@@ -259,7 +223,7 @@ function generateInvoicePDF(inv, biz) {
         ${biz.website}
       </div>
     </div>
-    <div class="billto" style="text-align:right">
+    <div style="text-align:right">
       <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Bill To</div>
       <div style="font-weight:700;font-size:15px;color:#111">${inv.client}</div>
       <div style="font-size:13px;color:#555;line-height:1.9;margin-top:4px">
@@ -354,13 +318,15 @@ function downloadInvoicePDF(inv, biz, onDone) {
 async function exportAllToExcel(clients, invoices, djs, biz){
   const num = n => Number(n)||0;
 
+  // Tag each invoice with its financial year
   const invSummary = invoices.map(inv=>{
     const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
     const gst = subtotal*0.1;
     return {
-      "Invoice #": inv.id, "Client": inv.client, "Client Email": inv.clientEmail||"",
+      "FY": getFY(inv.date)||"", "Invoice #": inv.id, "Client": inv.client, "Client Email": inv.clientEmail||"",
       "Client Phone": inv.clientPhone||"", "Client ABN": inv.clientABN||"",
       "Date": inv.date||"", "Due": inv.due||"", "Status": inv.status||"",
+      "Paid Date": inv.paidDate||"",
       "Subtotal (ex GST)": num(subtotal), "GST (10%)": num(gst), "Total (inc GST)": num(subtotal+gst),
       "Payment Ref": inv.paymentRef||inv.id, "Notes": inv.notes||""
     };
@@ -369,7 +335,7 @@ async function exportAllToExcel(clients, invoices, djs, biz){
   const lineItems = [];
   invoices.forEach(inv=>inv.items.forEach(it=>{
     lineItems.push({
-      "Invoice #": inv.id, "Client": inv.client,
+      "FY": getFY(inv.date)||"", "Invoice #": inv.id, "Client": inv.client,
       "Description": it.desc||it.catalogueLabel||"",
       "Qty": num(it.qty), "Rate (ex GST)": num(it.rate),
       "Amount (ex GST)": num(it.qty)*num(it.rate)
@@ -377,9 +343,9 @@ async function exportAllToExcel(clients, invoices, djs, biz){
   }));
 
   const clientRows = clients.map(c=>({
-    "Name": c.name||"", "Type": c.type||"", "Status": c.status||"",
+    "FY": getFY(c.eventDate)||"", "Name": c.name||"", "Type": c.type||"", "Status": c.status||"",
     "Phone": c.phone||"", "Email": c.email||"", "Event Date": c.eventDate||"",
-    "Venue": c.venue||"", "Quoted Value": num(c.value), "Paid": c.paid?"Yes":"No",
+    "Venue": c.venue||"", "Quoted Value": num(c.value), "Amount Paid": num(c.paid),
     "ABN": c.abn||"", "Source": c.source||"", "Notes": c.notes||""
   }));
 
@@ -395,6 +361,34 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     "Account Name":biz.accountName,"Account No.":biz.account,"Instagram":biz.instagram,"Mixcloud":biz.mixcloud
   }).map(([k,v])=>({Field:k, Value:v||""}));
 
+  // ── EOFY SUMMARY (one row per financial year) ──
+  const fySet = new Set();
+  invoices.forEach(i=>{const f=getFY(i.date);if(f)fySet.add(f);});
+  clients.forEach(c=>{const f=getFY(c.eventDate);if(f)fySet.add(f);});
+  const fyList = [...fySet].sort().reverse();
+  const eofySummary = fyList.map(fy=>{
+    const fyInvs = invoices.filter(i=>getFY(i.date)===fy);
+    const fyClients = clients.filter(c=>getFY(c.eventDate)===fy);
+    const paidInvs = fyInvs.filter(i=>i.status==="Paid");
+    const totalIncome = paidInvs.reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0),0);
+    const totalGST = totalIncome*0.1;
+    const totalIncGST = totalIncome+totalGST;
+    const outstandingInvs = fyInvs.filter(i=>i.status!=="Paid"&&i.status!=="Draft");
+    const outstandingTotal = outstandingInvs.reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
+    return {
+      "Financial Year": fy,
+      "Total Invoices": fyInvs.length,
+      "Invoices Paid": paidInvs.length,
+      "Income (ex GST)": num(totalIncome),
+      "GST Collected": num(totalGST),
+      "Income (inc GST)": num(totalIncGST),
+      "Outstanding (inc GST)": num(outstandingTotal),
+      "Clients": fyClients.length,
+      "Confirmed Gigs": fyClients.filter(c=>c.status==="Confirmed").length,
+      "ABN": biz.abn||"NOT SET — add in Settings",
+    };
+  });
+
   const today = new Date().toISOString().slice(0,10);
   const fname = "C-RAM-Records-" + today;
 
@@ -402,6 +396,7 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     const mod = await import("xlsx");
     const XLSX = mod.utils ? mod : (mod.default || mod);
     const wb = XLSX.utils.book_new();
+    if(eofySummary.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(eofySummary), "EOFY Summary");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientRows), "Clients");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invSummary), "Invoices");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lineItems), "Invoice Line Items");
@@ -410,14 +405,13 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     XLSX.writeFile(wb, fname + ".xlsx");
     return {ok:true, format:"xlsx"};
   } catch(e) {
-    // Fallback: one CSV with every section — opens in Excel, needs no library.
     const esc = v => { const s=String(v==null?"":v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
     const section = (title, rows) => {
       if(!rows.length) return title+"\n(no records)\n\n";
       const headers = Object.keys(rows[0]);
       return title+"\n"+[headers.join(",")].concat(rows.map(r=>headers.map(h=>esc(r[h])).join(","))).join("\n")+"\n\n";
     };
-    const csv = section("CLIENTS",clientRows)+section("INVOICES",invSummary)+section("INVOICE LINE ITEMS",lineItems)+section("DJ ROSTER",djRows)+section("BUSINESS DETAILS",bizRows);
+    const csv = section("EOFY SUMMARY",eofySummary)+section("CLIENTS",clientRows)+section("INVOICES",invSummary)+section("INVOICE LINE ITEMS",lineItems)+section("DJ ROSTER",djRows)+section("BUSINESS DETAILS",bizRows);
     const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -487,17 +481,16 @@ ${biz.name}`;
           subject,
           text: body,
           html: buildHtml(),
-          invoice: inv,   // server generates + attaches the PDF from this
-          biz,
+          replyTo: biz.email || undefined,
         }),
       });
       if (res.status === 404) {
         setStatus("error");
-        setErrorMsg("Direct send isn't set up on this version yet. Use the Open in Gmail button below, or connect your Gmail (Vercel env vars) to send with the PDF attached.");
+        setErrorMsg("The email backend isn't running in this preview. Send Now works once the app is deployed (or run locally with vercel dev) — see the README. Until then, the Open in Gmail button below is a no-setup fallback.");
         return;
       }
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setStatus("error"); setErrorMsg(data.error || `Couldn't send (${res.status}). If it mentions GMAIL_USER / GMAIL_APP_PASSWORD, add those in Vercel and redeploy.`); return; }
+      if (!res.ok) { setStatus("error"); setErrorMsg(data.error || `Send failed (${res.status}). Check that RESEND_API_KEY is set on the server.`); return; }
       setStatus("sent");
       onSent && onSent();
       setTimeout(() => { onClose && onClose(); }, 1400);
@@ -587,22 +580,49 @@ ${biz.name}`;
   );
 }
 
+// ── FINANCIAL YEAR HELPERS (AU: 1 Jul – 30 Jun) ─────────────────
+// getFY("2026-03-15") → "FY 2025-26"  (falls in July 2025 – June 2026)
+// getFY("2026-08-01") → "FY 2026-27"
+function getFY(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr);if(isNaN(d))return null;
+  const m=d.getMonth(),y=d.getFullYear(); // m is 0-based; Jul=6
+  const startYear=m>=6?y:y-1;
+  return "FY "+startYear+"-"+String(startYear+1).slice(2);
+}
+function currentFY(){const n=new Date(),m=n.getMonth(),y=n.getFullYear();const s=m>=6?y:y-1;return "FY "+s+"-"+String(s+1).slice(2);}
+function allFYs(clients,invoices){
+  const s=new Set();
+  clients.forEach(c=>{const f=getFY(c.eventDate);if(f)s.add(f);});
+  invoices.forEach(i=>{const f=getFY(i.date);if(f)s.add(f);});
+  s.add(currentFY());
+  return [...s].sort().reverse();
+}
+function invTotal(inv){return inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1;}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────
-function Dashboard({clients,invoices,setTab}){
-  const paid=invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
-  const outstanding=invoices.filter(i=>i.status!=="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
-  const confirmed=clients.filter(c=>c.status==="Confirmed").length;
-  const leads=clients.filter(c=>["Lead","Inquiry","Opportunity"].includes(c.status)).length;
-  const upcoming=[...clients].filter(c=>c.eventDate).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,6);
-  const overdue=invoices.filter(i=>i.status==="Overdue");
+function Dashboard({clients,invoices,djs,setTab}){
+  const [fy,setFy]=useState(currentFY());
+  const years=allFYs(clients,invoices);
+  const fyInvoices=invoices.filter(i=>getFY(i.date)===fy);
+  const fyClients=clients.filter(c=>getFY(c.eventDate)===fy);
+  const paid=fyInvoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+invTotal(i),0);
+  const outstanding=fyInvoices.filter(i=>i.status!=="Paid"&&i.status!=="Draft").reduce((s,i)=>s+invTotal(i),0);
+  const gstCollected=fyInvoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*0.1,0);
+  const confirmed=fyClients.filter(c=>c.status==="Confirmed").length;
+  const leads=fyClients.filter(c=>["Lead","Inquiry","Opportunity"].includes(c.status)).length;
+  const upcoming=[...fyClients].filter(c=>c.eventDate&&new Date(c.eventDate)>=new Date()).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,6);
+  const overdue=fyInvoices.filter(i=>i.status==="Overdue");
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
       <div style={{textAlign:"center",marginBottom:22}}>
         <LogoW height={72}/>
         <p style={{color:C.muted,fontSize:13,marginTop:10}}>Business Command Centre — Melbourne, VIC</p>
-        <div style={{display:"inline-flex",gap:8,marginTop:8,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 14px",alignItems:"center"}}>
-          <span style={{width:7,height:7,borderRadius:"50%",background:C.green,display:"inline-block"}}/>
-          <span style={{fontSize:12,color:C.green,fontWeight:600}}>Gmail Connected</span>
+        <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:10,flexWrap:"wrap",alignItems:"center"}}>
+          <select value={fy} onChange={e=>setFy(e.target.value)} style={{background:C.surface,color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:8,padding:"5px 12px",fontSize:13,fontWeight:700,fontFamily:"Bebas Neue,sans-serif",letterSpacing:1}}>
+            {years.map(y=><option key={y} value={y}>{y}</option>)}
+          </select>
+          <span style={{fontSize:11,color:C.dim}}>{fy===currentFY()?"Current year":"Past year"}</span>
         </div>
       </div>
       {overdue.length>0&&(
@@ -616,7 +636,7 @@ function Dashboard({clients,invoices,setTab}){
         </div>
       )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-        {[{v:fmt$(paid),l:"Revenue Collected",col:C.green,tab:"invoices"},{v:fmt$(outstanding),l:"Outstanding",col:C.coral,tab:"invoices"},{v:confirmed,l:"Confirmed Gigs",col:C.purple,tab:"crm"},{v:leads,l:"Active Leads",col:C.gold,tab:"crm"},{v:3,l:"DJ Roster",col:C.gold,tab:"roster"}].map(k=>(
+        {[{v:fmt$(paid),l:"Revenue Collected",col:C.green,tab:"invoices"},{v:fmt$(outstanding),l:"Outstanding",col:C.coral,tab:"invoices"},{v:fmt$(gstCollected),l:"GST Collected",col:C.gold,tab:"invoices"},{v:confirmed,l:"Confirmed Gigs",col:C.purple,tab:"crm"},{v:leads,l:"Active Leads",col:C.gold,tab:"crm"},{v:djs.length,l:"DJ Roster",col:C.gold,tab:"roster"}].map(k=>(
           <div key={k.l} onClick={()=>setTab(k.tab)} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:16,textAlign:"center",cursor:"pointer"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor=k.col}
             onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
@@ -628,6 +648,7 @@ function Dashboard({clients,invoices,setTab}){
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
         <Card>
           <h3 style={{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Upcoming Events</h3>
+          {upcoming.length===0&&<div style={{fontSize:12,color:C.dim}}>No upcoming events this FY.</div>}
           {upcoming.map(c=>(
             <div key={c.id} onClick={()=>setTab("crm")} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer"}}>
               <div><div style={{fontWeight:600,fontSize:13}}>{c.name}</div><div style={{fontSize:11,color:C.muted}}>{c.venue||"Venue TBC"}</div></div>
@@ -637,7 +658,7 @@ function Dashboard({clients,invoices,setTab}){
         </Card>
         <Card>
           <h3 style={{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Quick Actions</h3>
-          {[{icon:"🧾",label:"New Invoice",tab:"invoices"},{icon:"👥",label:"Add Client",tab:"crm"},{icon:"⚙️",label:"Business Settings",tab:"settings"},{icon:"🎶",label:"View Packages",tab:"packages"},{icon:"⭐",label:"Reviews",tab:"reviews"}].map(a=>(
+          {[{icon:"🧾",label:"New Invoice",tab:"invoices"},{icon:"👥",label:"Add Client",tab:"crm"},{icon:"⚙️",label:"Business Settings",tab:"settings"},{icon:"🎶",label:"View Packages",tab:"packages"},{icon:"📣",label:"Content Hub",tab:"content"}].map(a=>(
             <div key={a.label} onClick={()=>setTab(a.tab)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer"}}
               onMouseEnter={e=>e.currentTarget.style.opacity="0.7"}
               onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
@@ -653,7 +674,7 @@ function Dashboard({clients,invoices,setTab}){
 }
 
 // ── CRM ───────────────────────────────────────────────────────────
-function CRM({clients,packages,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
+function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   const [view,setView]=useState("list");const [sel,setSel]=useState(null);const [filter,setFilter]=useState("All");
   const [busy,setBusy]=useState(false);
   const blank={name:"",type:"Wedding",phone:"",email:"",abn:"",status:"Lead",eventDate:"",venue:"",notes:"",value:"",paid:"0",source:""};
@@ -677,24 +698,7 @@ function CRM({clients,packages,onSaveClient,onDeleteClient,onCreateInvoice,setTa
     setBusy(false);
   };
   const createInvoice=async client=>{
-    // Pre-fill the line item with the package this client chose. Match by the
-    // saved value (their inc-GST price) first, then by name mentioned in notes.
-    // Line-item rate is ex-GST (price / 1.1) so the invoice total lands back on
-    // the advertised inc-GST price after the 10% GST line is added.
-    const pkgs=packages||[];
-    const pkg=pkgs.find(p=>Number(p.price)>0&&Number(p.price)===Number(client.value))
-            ||pkgs.find(p=>p.name&&client.notes&&client.notes.toLowerCase().includes(p.name.toLowerCase()));
-    const exGst=v=>v>0?Math.round((Number(v)/1.1)*100)/100:"";
-    let item;
-    if(pkg){
-      const inc=(pkg.includes||[]).map(i=>i.name||i).filter(Boolean).join(", ");
-      item={catalogueLabel:pkg.name,desc:`${pkg.name}${pkg.tagline?` — ${pkg.tagline}`:""}${inc?`. Includes: ${inc}.`:""}`,qty:1,rate:String(exGst(pkg.price))};
-    }else if(Number(client.value)>0){
-      item={catalogueLabel:"",desc:client.type?`${client.type} — DJ Services`:"DJ Services",qty:1,rate:String(exGst(client.value))};
-    }else{
-      item={catalogueLabel:"",desc:"",qty:1,rate:""};
-    }
-    const inv={client:client.name,clientEmail:client.email||"",clientPhone:client.phone||"",clientABN:client.abn||"",date:new Date().toISOString().split("T")[0],due:"",items:[item],status:"Draft",notes:"50% deposit due on acceptance. Balance due 7 days prior to event.",paymentRef:""};
+    const inv={client:client.name,clientEmail:client.email||"",clientPhone:client.phone||"",clientABN:client.abn||"",date:new Date().toISOString().split("T")[0],due:"",items:[{catalogueLabel:"",desc:"",qty:1,rate:""}],status:"Draft",notes:"50% deposit due on acceptance. Balance due 7 days prior to event.",paymentRef:""};
     setBusy(true);
     try{const saved=await onCreateInvoice(inv);PENDING_INVOICE=saved.id;setTab("invoices");}
     catch(e){alert("Couldn't create invoice: "+(e.message||e));}
@@ -811,8 +815,7 @@ function CRM({clients,packages,onSaveClient,onDeleteClient,onCreateInvoice,setTa
 }
 
 // ── INVOICES ─────────────────────────────────────────────────────
-function Invoices({clients,invoices,biz,packages,addons,onSaveInvoice,onDeleteInvoice,onSetInvoiceStatus}){
-  const catalogue=buildCatalogue(packages,addons);
+function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoiceStatus}){
   const pendingOpen = PENDING_INVOICE;
   const [view,setView]=useState(pendingOpen?"form":"list");
   const [editing,setEditing]=useState(()=>{if(pendingOpen){PENDING_INVOICE=null;return pendingOpen;}return null;});
@@ -822,11 +825,7 @@ function Invoices({clients,invoices,biz,packages,addons,onSaveInvoice,onDeleteIn
   const [form,setForm]=useState(()=>{if(pendingOpen){const inv=invoices.find(i=>i.id===pendingOpen);return getForm(inv)||blankForm;}return blankForm;});
   const sub=form.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
   const gstAmt=sub*0.1;const totalAmt=sub+gstAmt;
-  // Functional update so picking a package (which sets name, description and
-  // price back-to-back) composes instead of the three updates clobbering each other.
-  const updItem=(idx,field,val)=>setForm(f=>{const it=[...f.items];it[idx]={...it[idx],[field]:val};return{...f,items:it};});
-  // Set name, description and price together in one update — picking a package fills all of it.
-  const pickItem=(idx,cat)=>setForm(f=>{const it=[...f.items];it[idx]={...it[idx],catalogueLabel:cat.label,desc:cat.desc||cat.label,...(Number(cat.rate)>0?{rate:String(cat.rate)}:{})};return{...f,items:it};});
+  const updItem=(idx,field,val)=>{const it=[...form.items];it[idx]={...it[idx],[field]:val};setForm({...form,items:it});};
   const remItem=idx=>setForm({...form,items:form.items.filter((_,i)=>i!==idx)});
   const prefill=name=>{const c=clients.find(x=>x.name===name);if(c)setForm(f=>({...f,client:name,clientEmail:c.email||"",clientPhone:c.phone||"",clientABN:c.abn||""}));else setForm(f=>({...f,client:name}));};
   const openNew=()=>{setEditing(null);setForm(blankForm);setView("form");};
@@ -900,7 +899,7 @@ function Invoices({clients,invoices,biz,packages,addons,onSaveInvoice,onDeleteIn
           <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1}}>Line Items</h4>
           <span style={{fontSize:10,color:C.dim}}>Prices ex GST</span>
         </div>
-        {form.items.map((item,idx)=><LineItemRow key={idx} item={item} idx={idx} onChange={updItem} onPick={pickItem} onRemove={remItem} catalogue={catalogue}/>)}
+        {form.items.map((item,idx)=><LineItemRow key={idx} item={item} idx={idx} onChange={updItem} onRemove={remItem}/>)}
         <Btn variant="ghost" onClick={()=>setForm({...form,items:[...form.items,{...blankItem}]})} style={{fontSize:12,marginTop:4}}>+ Add Line Item</Btn>
         <div style={{borderTop:`1px solid ${C.border}`,marginTop:14,paddingTop:12,display:"flex",justifyContent:"flex-end"}}>
           <div style={{width:280}}>
@@ -971,17 +970,6 @@ function Invoices({clients,invoices,biz,packages,addons,onSaveInvoice,onDeleteIn
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────────
-// Defined at module scope (NOT inside Settings) so it stays the same
-// component between renders — otherwise every keystroke remounts the
-// input and you lose focus / can only type one letter.
-function SettingsField({form,setForm,label,field,type="text",placeholder=""}){
-  return (
-    <div style={{display:"flex",flexDirection:"column",gap:5}}>
-      <label style={{fontSize:11,fontWeight:600,color:C.muted}}>{label}</label>
-      <input type={type} value={form[field]||""} placeholder={placeholder} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}/>
-    </div>
-  );
-}
 function Settings({biz,onSaveBiz}){
   const [form,setForm]=useState({...biz});
   const [saved,setSaved]=useState(false);
@@ -989,6 +977,12 @@ function Settings({biz,onSaveBiz}){
     try{await onSaveBiz({...form});setSaved(true);setTimeout(()=>setSaved(false),2500);}
     catch(e){alert("Couldn't save settings: "+(e.message||e));}
   };
+  const Field=({label,field,type="text",placeholder=""})=>(
+    <div style={{display:"flex",flexDirection:"column",gap:5}}>
+      <label style={{fontSize:11,fontWeight:600,color:C.muted}}>{label}</label>
+      <input type={type} value={form[field]||""} placeholder={placeholder} onChange={e=>setForm({...form,[field]:e.target.value})}/>
+    </div>
+  );
   return(
     <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
       <div style={{marginBottom:22}}>
@@ -1031,13 +1025,13 @@ function Settings({biz,onSaveBiz}){
             <input value={form.abn||""} placeholder="e.g. 51 824 753 556" onChange={e=>setForm({...form,abn:e.target.value})} style={{borderColor:form.abn?C.green:C.coral,borderWidth:2,fontSize:15,fontWeight:600}}/>
             <span style={{fontSize:11,color:C.muted}}>Required on all Australian tax invoices by law</span>
           </div>
-          <SettingsField form={form} setForm={setForm} label="Business Name" field="name"/>
-          <SettingsField form={form} setForm={setForm} label="Phone" field="phone" type="tel"/>
-          <SettingsField form={form} setForm={setForm} label="Email" field="email" type="email"/>
-          <SettingsField form={form} setForm={setForm} label="Website" field="website"/>
-          <SettingsField form={form} setForm={setForm} label="Address" field="address"/>
-          <SettingsField form={form} setForm={setForm} label="Instagram" field="instagram" placeholder="@djc_ram"/>
-          <SettingsField form={form} setForm={setForm} label="Mixcloud" field="mixcloud"/>
+          <Field label="Business Name" field="name"/>
+          <Field label="Phone" field="phone" type="tel"/>
+          <Field label="Email" field="email" type="email"/>
+          <Field label="Website" field="website"/>
+          <Field label="Address" field="address"/>
+          <Field label="Instagram" field="instagram" placeholder="@djc_ram"/>
+          <Field label="Mixcloud" field="mixcloud"/>
         </div>
       </Card>
 
@@ -1047,10 +1041,10 @@ function Settings({biz,onSaveBiz}){
           ⚠️ These appear on every tax invoice — double-check BSB and account number carefully
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <SettingsField form={form} setForm={setForm} label="Bank Name" field="bank" placeholder="e.g. Commonwealth Bank"/>
-          <SettingsField form={form} setForm={setForm} label="Account Name" field="accountName"/>
-          <SettingsField form={form} setForm={setForm} label="BSB *" field="bsb" placeholder="e.g. 062-000"/>
-          <SettingsField form={form} setForm={setForm} label="Account Number *" field="account" placeholder="e.g. 12345678"/>
+          <Field label="Bank Name" field="bank" placeholder="e.g. Commonwealth Bank"/>
+          <Field label="Account Name" field="accountName"/>
+          <Field label="BSB *" field="bsb" placeholder="e.g. 062-000"/>
+          <Field label="Account Number *" field="account" placeholder="e.g. 12345678"/>
         </div>
       </Card>
 
@@ -1711,274 +1705,6 @@ function Login() {
   );
 }
 
-// ── REVIEWS ───────────────────────────────────────────────────────
-// Paste your favourite Google / Facebook reviews here — the website
-// shows every review that's ticked "Show on website".
-function Reviews({reviews,onSaveReview,onDeleteReview}){
-  const [editing,setEditing]=useState(null); // review id, or "new"
-  const [form,setForm]=useState(null);
-  const [busy,setBusy]=useState(false);
-  const blank={author:"",source:"google",rating:5,review:"",eventType:"",active:true};
-  const srcColor=s=>s==="facebook"?"#1877F2":"#4285F4";
-  const srcLabel=s=>s==="facebook"?"Facebook":"Google";
-  const stars=n=>"★".repeat(Math.max(1,Math.min(5,Number(n)||5)))+"☆".repeat(5-Math.max(1,Math.min(5,Number(n)||5)));
-
-  const startEdit=r=>{setForm({...r});setEditing(r.id);};
-  const startNew=()=>{setForm({...blank});setEditing("new");};
-  const cancel=()=>{setEditing(null);setForm(null);};
-  const setField=(k,v)=>setForm(f=>({...f,[k]:v}));
-
-  const save=async()=>{
-    if(!String(form.author).trim()||!String(form.review).trim()){alert("Please fill in the reviewer's name and the review text.");return;}
-    setBusy(true);
-    try{await onSaveReview({...form,rating:Math.max(1,Math.min(5,Number(form.rating)||5))});cancel();}
-    catch(e){alert("Couldn't save review: "+(e.message||e));}
-    setBusy(false);
-  };
-  const del=async r=>{
-    if(!confirm(`Delete the review from "${r.author}"? This can't be undone.`))return;
-    setBusy(true);
-    try{await onDeleteReview(r.id);}
-    catch(e){alert("Couldn't delete: "+(e.message||e));}
-    setBusy(false);
-  };
-
-  if(editing&&form){
-    const th={fontSize:11,fontWeight:600,color:C.muted};
-    return(
-      <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-          <Btn variant="ghost" onClick={cancel}>← Back</Btn>
-          <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{editing==="new"?"New Review":"Edit Review"}</h2>
-        </div>
-        <Card style={{marginBottom:12}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}><label style={th}>Reviewer's Name</label><input value={form.author||""} placeholder="e.g. Sarah M." onChange={e=>setField("author",e.target.value)}/></div>
-            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Where it was posted</label><select value={form.source} onChange={e=>setField("source",e.target.value)}>{[["google","Google"],["facebook","Facebook"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></div>
-            <div style={{display:"flex",flexDirection:"column",gap:5}}><label style={th}>Star Rating</label><select value={form.rating} onChange={e=>setField("rating",e.target.value)}>{[5,4,3,2,1].map(n=><option key={n} value={n}>{"★".repeat(n)+"☆".repeat(5-n)} ({n})</option>)}</select></div>
-            <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}><label style={th}>Event (optional — shows under the name)</label><input value={form.eventType||""} placeholder="e.g. Wedding — Yarra Valley" onChange={e=>setField("eventType",e.target.value)}/></div>
-            <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}><label style={th}>The Review</label><textarea rows={5} value={form.review||""} placeholder="Copy the review text exactly as the client wrote it…" onChange={e=>setField("review",e.target.value)} style={{resize:"vertical"}}/></div>
-            <div style={{display:"flex",alignItems:"center",gap:8}}><input type="checkbox" checked={form.active!==false} onChange={e=>setField("active",e.target.checked)} style={{width:"auto"}}/><label style={th}>Show on website</label></div>
-          </div>
-        </Card>
-        <div style={{display:"flex",gap:10}}><Btn onClick={save} disabled={busy}>{busy?"Saving…":"💾 Save Review"}</Btn><Btn variant="ghost" onClick={cancel}>Cancel</Btn></div>
-      </div>
-    );
-  }
-
-  const sorted=[...reviews].sort((a,b)=>(a.position||0)-(b.position||0));
-  return(
-    <div style={{animation:"slideIn 0.3s ease"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
-        <div><h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Reviews</h2><p style={{color:C.muted,fontSize:12}}>Your Google & Facebook reviews, shown on the website</p></div>
-        <Btn onClick={startNew}>+ Add Review</Btn>
-      </div>
-      {sorted.length===0&&<Card style={{textAlign:"center",color:C.muted,marginBottom:20}}>No reviews yet. Tap "+ Add Review" and paste in your favourite Google or Facebook reviews — they'll appear on the website automatically.</Card>}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,marginBottom:20}}>
-        {sorted.map(r=>(
-          <Card key={r.id} style={{opacity:r.active===false?0.55:1,display:"flex",flexDirection:"column"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <span style={{color:C.gold,fontSize:15,letterSpacing:2}}>{stars(r.rating)}</span>
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                {r.active===false&&<Badge label="Hidden" color={C.muted}/>}
-                <Badge label={srcLabel(r.source)} color={srcColor(r.source)}/>
-              </div>
-            </div>
-            <p style={{fontSize:13,color:C.text,lineHeight:1.55,fontStyle:"italic",flex:1,marginBottom:10}}>"{r.review.length>180?r.review.slice(0,180)+"…":r.review}"</p>
-            <div style={{fontSize:13,fontWeight:600,color:C.text}}>{r.author}</div>
-            {r.eventType&&<div style={{fontSize:11,color:C.dim}}>{r.eventType}</div>}
-            <div style={{display:"flex",gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:10}}>
-              <Btn onClick={()=>startEdit(r)} style={{fontSize:12,flex:1}}>✏️ Edit</Btn>
-              <Btn variant="ghost" onClick={()=>del(r)} style={{fontSize:12,color:C.coral}} disabled={busy}>Delete</Btn>
-            </div>
-          </Card>
-        ))}
-      </div>
-      <Card style={{background:C.gold+"08",borderColor:C.gold+"33"}}>
-        <p style={{fontSize:12.5,color:C.muted,lineHeight:1.6}}>💡 <b style={{color:C.text}}>Where to find your reviews:</b> Google → search "C-RAM Entertainment" and open your Business Profile reviews. Facebook → your page → Reviews tab. Copy the text word-for-word and paste it here — real words work better than polished ones.</p>
-      </Card>
-    </div>
-  );
-}
-
-// ── EMAIL TEMPLATES ───────────────────────────────────────────────
-// Ready-made emails. Each fills itself in from the chosen client + your
-// business details, then you tweak and send from Gmail in one click.
-const firstName = c => c && c.name ? c.name.split(/[\s—-]/)[0].trim() || "there" : "there";
-const sig = biz => `${biz.name}${biz.phone ? `\n${biz.phone}` : ""}${biz.website ? `\n${biz.website}` : ""}`;
-const evDate = c => c && c.eventDate ? fmtDL(c.eventDate) : "";
-const venueOf = c => c && c.venue && c.venue !== "TBC" ? c.venue : "";
-
-const EMAIL_TEMPLATES = [
-  {
-    id: "enquiry", label: "New enquiry reply", icon: "👋",
-    subject: (biz, c) => `Thanks for your enquiry — ${biz.name}`,
-    body: (biz, c) =>
-`Hi ${firstName(c)},
-
-Thanks so much for getting in touch about your ${c && c.type ? c.type.toLowerCase() : "event"}${evDate(c) ? ` on ${evDate(c)}` : ""} — I'd love to be part of it.
-
-So I can put together the right quote, could you let me know:
-- Venue / location${venueOf(c) ? ` (I have ${venueOf(c)} noted)` : ""}
-- Rough guest numbers
-- Start and finish times
-
-In the meantime you can see my packages and past events at ${biz.website}.
-
-Talk soon,
-${sig(biz)}`,
-  },
-  {
-    id: "deposit", label: "Deposit request", icon: "💰",
-    subject: (biz, c) => `Securing your date — deposit details`,
-    body: (biz, c) =>
-`Hi ${firstName(c)},
-
-Great news — I can lock in ${evDate(c) || "your date"} for you. To secure the booking I just need the deposit.
-
-Payment details:
-Bank: ${biz.bank || "[Bank]"}
-BSB: ${biz.bsb || "[BSB]"}
-Account: ${biz.account || "[Account]"}
-Name: ${biz.accountName || biz.name}
-Reference: ${firstName(c)}${evDate(c) ? ` ${evDate(c)}` : ""}
-
-Once that's through your date is officially held. Any questions just reply here or call ${biz.phone}.
-
-Cheers,
-${sig(biz)}`,
-  },
-  {
-    id: "confirm", label: "Booking confirmation", icon: "✅",
-    subject: (biz, c) => `You're booked in!${evDate(c) ? ` — ${evDate(c)}` : ""}`,
-    body: (biz, c) =>
-`Hi ${firstName(c)},
-
-You're all confirmed — thank you! Here's what I've got:
-
-Date: ${evDate(c) || "[date]"}
-Venue: ${venueOf(c) || "[venue]"}
-
-Closer to the day I'll send a short form so you can add your must-play songs, any do-not-play tracks, and the run sheet.
-
-Counting down to a great night.
-
-Cheers,
-${sig(biz)}`,
-  },
-  {
-    id: "final", label: "Final details (week of)", icon: "📋",
-    subject: (biz, c) => `Your event this week — final details`,
-    body: (biz, c) =>
-`Hi ${firstName(c)},
-
-Not long now${evDate(c) ? ` until ${evDate(c)}` : ""}! Just confirming the final details:
-
-- Venue: ${venueOf(c) || "[venue]"}
-- Start / finish times:
-- Special songs (first dance, entrance, etc.):
-- On-site contact + number on the day:
-
-If anything's changed just let me know. Otherwise I'll arrive with plenty of time to set up and we'll make it a night to remember.
-
-Cheers,
-${sig(biz)}`,
-  },
-  {
-    id: "thanks", label: "Thank you + review", icon: "🙏",
-    subject: (biz, c) => `Thank you — and a quick favour`,
-    body: (biz, c) =>
-`Hi ${firstName(c)},
-
-Thank you for having me${evDate(c) ? ` on ${evDate(c)}` : ""} — I had a brilliant time and hope you and your guests did too.
-
-If you've got 30 seconds, a quick review would mean the world and helps other people find me:
-- Facebook: https://www.facebook.com/DJC.RAMOFFICIAL/reviews
-- Google: search "${biz.name}" and tap the stars
-
-Thanks again, and I hope our paths cross on the dance floor again soon.
-
-Cheers,
-${sig(biz)}`,
-  },
-];
-
-// ── EMAILS TAB ────────────────────────────────────────────────────
-function Emails({clients, biz}) {
-  const [tid, setTid] = useState(EMAIL_TEMPLATES[0].id);
-  const [cid, setCid] = useState("");
-  const [to, setTo] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [copied, setCopied] = useState("");
-
-  const client = clients.find(c => String(c.id) === String(cid)) || null;
-  const tpl = EMAIL_TEMPLATES.find(t => t.id === tid) || EMAIL_TEMPLATES[0];
-
-  useEffect(() => {
-    setSubject(tpl.subject(biz, client));
-    setBody(tpl.body(biz, client));
-    setTo(client ? (client.email || "") : "");
-  }, [tid, cid]);
-
-  const gmailHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  const copy = (txt, which) => { try { navigator.clipboard.writeText(txt); setCopied(which); setTimeout(() => setCopied(""), 1600); } catch (e) {} };
-  const th = { fontSize: 11, fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6, display: "block" };
-
-  return (
-    <div style={{ animation: "slideIn 0.3s ease" }}>
-      <div style={{ marginBottom: 18 }}>
-        <h2 style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: 30, letterSpacing: 2, color: C.gold }}>Emails</h2>
-        <p style={{ color: C.muted, fontSize: 12 }}>Pick a template and a client — it writes itself, then send from Gmail.</p>
-      </div>
-
-      <Card style={{ marginBottom: 12 }}>
-        <label style={th}>1 · Choose an email</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-          {EMAIL_TEMPLATES.map(t => (
-            <button key={t.id} onClick={() => setTid(t.id)} style={{ background: tid === t.id ? C.gold : "transparent", color: tid === t.id ? "#000" : C.text, border: `1px solid ${tid === t.id ? C.gold : C.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 12.5, fontWeight: tid === t.id ? 700 : 500, fontFamily: "inherit" }}>
-              {t.icon} {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div>
-            <label style={th}>2 · Client</label>
-            <select value={cid} onChange={e => setCid(e.target.value)}>
-              <option value="">— No client / type manually —</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.email ? "" : " (no email)"}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={th}>To</label>
-            <input value={to} placeholder="client@email.com" onChange={e => setTo(e.target.value)} />
-          </div>
-        </div>
-      </Card>
-
-      <Card style={{ marginBottom: 12 }}>
-        <label style={th}>Subject</label>
-        <input value={subject} onChange={e => setSubject(e.target.value)} style={{ marginBottom: 14 }} />
-        <label style={th}>Message</label>
-        <textarea rows={14} value={body} onChange={e => setBody(e.target.value)} style={{ resize: "vertical", lineHeight: 1.55 }} />
-      </Card>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-        <a href={gmailHref} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-          <Btn variant="primary">✉️ Open in Gmail</Btn>
-        </a>
-        <Btn variant="ghost" onClick={() => copy(body, "body")}>{copied === "body" ? "Copied ✓" : "Copy message"}</Btn>
-        <Btn variant="ghost" onClick={() => copy(subject, "subject")}>{copied === "subject" ? "Copied ✓" : "Copy subject"}</Btn>
-        {!to && <span style={{ fontSize: 11.5, color: C.coral }}>Pick a client or type an address to send.</span>}
-      </div>
-      <p style={{ fontSize: 11.5, color: C.dim, marginTop: 14, lineHeight: 1.6, maxWidth: 620 }}>
-        💡 "Open in Gmail" drops this straight into your Gmail with everything filled in — just press Send. Because it's your Gmail, replies come back to your inbox and a copy is saved in Sent.
-      </p>
-    </div>
-  );
-}
-
 export default function App(){
   const [session,setSession]=useState(undefined); // undefined = still checking
   const [loading,setLoading]=useState(false);
@@ -1988,7 +1714,6 @@ export default function App(){
   const [djs,setDjs]=useState([]);
   const [packages,setPackages]=useState([]);
   const [addons,setAddons]=useState([]);
-  const [reviews,setReviews]=useState([]);
   const [biz,setBiz]=useState(DEFAULT_BIZ);
   const [tab,setTab]=useState("dashboard");
   const [exportStatus,setExportStatus]=useState("");
@@ -2005,8 +1730,8 @@ export default function App(){
   const loadAll=useCallback(async()=>{
     setLoading(true);setDataError("");
     try{
-      const [c,i,d,b,pk,ad,rv]=await Promise.all([listClients(),listInvoices(),listDjs(),getSettings(),listPackages().catch(()=>[]),listAddons().catch(()=>[]),listReviews().catch(()=>[])]);
-      setClients(c);setInvoices(i);setDjs(d);if(b)setBiz(b);setPackages(pk);setAddons(ad);setReviews(rv);
+      const [c,i,d,b,pk,ad]=await Promise.all([listClients(),listInvoices(),listDjs(),getSettings(),listPackages().catch(()=>[]),listAddons().catch(()=>[])]);
+      setClients(c);setInvoices(i);setDjs(d);if(b)setBiz(b);setPackages(pk);setAddons(ad);
     }catch(e){setDataError(e.message||"Couldn't load your data.");}
     setLoading(false);
   },[]);
@@ -2032,7 +1757,9 @@ export default function App(){
   };
   const onDeleteInvoice=async inv=>{await deleteInvoice(inv);setInvoices(prev=>prev.filter(x=>x.id!==inv.id));};
   const onSetInvoiceStatus=async(inv,status)=>{
-    const saved=await saveInvoice({...inv,status});
+    const update={...inv,status};
+    if(status==="Paid"&&!inv.paidDate){update.paidDate=new Date().toISOString().split("T")[0];}
+    const saved=await saveInvoice(update);
     setInvoices(prev=>prev.map(x=>x.id===saved.id?saved:x));
     return saved;
   };
@@ -2056,12 +1783,6 @@ export default function App(){
     return saved;
   };
   const onDeleteAddon=async id=>{await deleteAddon(id);setAddons(prev=>prev.filter(x=>x.id!==id));};
-  const onSaveReview=async r=>{
-    const saved=await saveReview(r);
-    setReviews(prev=>prev.some(x=>x.id===saved.id)?prev.map(x=>x.id===saved.id?saved:x):[...prev,saved]);
-    return saved;
-  };
-  const onDeleteReview=async id=>{await deleteReview(id);setReviews(prev=>prev.filter(x=>x.id!==id));};
 
   const logout=async()=>{try{await supabase.auth.signOut();}catch(e){}};
 
@@ -2093,13 +1814,12 @@ export default function App(){
           <div style={{textAlign:"center",color:C.muted,padding:"60px 0"}}>Loading your data…</div>
         ):(
           <>
-            {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} setTab={setTab}/>}
-            {tab==="crm"&&<CRM clients={clients} packages={packages} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab}/>}
-            {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} packages={packages} addons={addons} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
+            {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} djs={djs} setTab={setTab}/>}
+            {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab}/>}
+            {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
             {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj}/>}
+            {tab==="content"&&<Content/>}
             {tab==="packages"&&<Packages packages={packages} addons={addons} onSavePackage={onSavePackage} onDeletePackage={onDeletePackage} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>}
-            {tab==="reviews"&&<Reviews reviews={reviews} onSaveReview={onSaveReview} onDeleteReview={onDeleteReview}/>}
-            {tab==="emails"&&<Emails clients={clients} biz={biz}/>}
             {tab==="settings"&&<Settings biz={biz} onSaveBiz={onSaveBiz}/>}
             {tab==="getintouch"&&<GetInTouch biz={biz} onSubmitLead={onSubmitLead} embedded={true}/>}
           </>
