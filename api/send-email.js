@@ -6,7 +6,7 @@
 //   GMAIL_APP_PASSWORD  = the 16-char App Password from your Google account
 import nodemailer from "nodemailer";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { LOGO_W_B64 } from "./_logo.js";
+import { LOGO_W_B64, LOGO_B_B64 } from "./_logo.js";
 
 const money = (n) =>
   "$" + Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -159,7 +159,7 @@ export default async function handler(req, res) {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) {
-    res.status(500).json({ error: "Email isn't connected yet. Add GMAIL_USER and GMAIL_APP_PASSWORD in Vercel → Settings → Environment Variables, then redeploy." });
+    res.status(500).json({ error: "Email isn't connected yet. Add GMAIL_USER and GMAIL_APP_PASSWORD in Vercel -> Settings -> Environment Variables, then redeploy." });
     return;
   }
   try {
@@ -175,12 +175,19 @@ export default async function handler(req, res) {
       } catch (e) { /* if PDF generation fails, still send the email */ }
     }
 
+    // Append the C-RAM logo as a signature on any HTML email (inline via cid).
+    let finalHtml = html;
+    if (finalHtml) {
+      attachments.push({ filename: "cram-logo.png", content: Buffer.from(LOGO_B_B64, "base64"), contentType: "image/png", cid: "cramlogo" });
+      finalHtml += '<div style="margin-top:16px"><img src="cid:cramlogo" alt="C-RAM Entertainment" width="150" style="width:150px;max-width:60%;height:auto;display:block"/></div>';
+    }
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com", port: 465, secure: true, auth: { user, pass },
     });
     await transporter.sendMail({
       from: ((biz && biz.name) || "C-RAM Entertainment") + " <" + user + ">",
-      to, subject: subject || "Invoice", text: text || "", html: html || undefined,
+      to, subject: subject || "Invoice", text: text || "", html: finalHtml || undefined,
       replyTo: user, attachments,
     });
     res.status(200).json({ ok: true, attached: attachments.length > 0 });
