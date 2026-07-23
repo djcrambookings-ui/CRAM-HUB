@@ -57,7 +57,7 @@ const EQBars=()=><div style={{display:"flex",alignItems:"flex-end",gap:3,height:
 const LogoW=({height=36})=><img src={LOGO_W} alt="C-RAM Entertainment" style={{height,objectFit:"contain",display:"block"}}/>;
 const LogoB=({height=36})=><img src={LOGO_B} alt="C-RAM Entertainment" style={{height,objectFit:"contain",display:"block"}}/>;
 
-// ── PACKAGES ─────────────────────────────────────────────────────
+// ‚îÄ‚îÄ PACKAGES ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 const PACKAGES=[
   {id:"essential",name:"THE ESSENTIAL",tagline:"Everything you need to fill the floor",price:2200,exGST:2000,tag:null,accentColor:C.muted,borderColor:C.border,hours:"5 Hours",
    includes:[{name:"5-hour set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"DJ controller decks",detail:"Pro-grade gear"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights",detail:"To build the atmosphere"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
@@ -65,8 +65,8 @@ const PACKAGES=[
   {id:"signature",name:"THE SIGNATURE",tagline:"Next-level lighting & atmosphere",price:3400,exGST:3090.91,tag:"MOST POPULAR",accentColor:C.gold,borderColor:C.gold,hours:"5 Hours",
    includes:[{name:"5-hour set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"DJ controller decks",detail:"Pro-grade gear"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights",detail:"To build the atmosphere"},{name:"4 extra lighting tubes",detail:"All lighting synced to the music"},{name:"Haze machine",detail:"Where the venue allows"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
    excludes:["Cocktail set","Turntables & mixer","Moving heads"],cta:"Book Signature"},
-  {id:"premium",name:"THE PREMIUM",tagline:"The full show — turntables, cocktail set & moving heads",price:4800,exGST:4363.64,tag:"FULL PRODUCTION",accentColor:C.coral,borderColor:C.coral,hours:"2hr cocktail + 5hr set",
-   includes:[{name:"2-hour cocktail set",detail:"Battery setup — plays anywhere"},{name:"5-hour main set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"2 turntable controllers + DJ mixer",detail:"Authentic old-school look"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights + 4 light tubes",detail:"Synced to the music"},{name:"2 moving heads",detail:"Adds dimension to the party"},{name:"Haze machine",detail:"Where the venue allows"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
+  {id:"premium",name:"THE PREMIUM",tagline:"The full show ‚Äî turntables, cocktail set & moving heads",price:4800,exGST:4363.64,tag:"FULL PRODUCTION",accentColor:C.coral,borderColor:C.coral,hours:"2hr cocktail + 5hr set",
+   includes:[{name:"2-hour cocktail set",detail:"Battery setup ‚Äî plays anywhere"},{name:"5-hour main set",detail:"11pm cut-off"},{name:"DJ podium booth",detail:"Clean, professional setup"},{name:"2 turntable controllers + DJ mixer",detail:"Authentic old-school look"},{name:"Speakers",detail:"Up to 150 indoor / 100 outdoor"},{name:"4 party lights + 4 light tubes",detail:"Synced to the music"},{name:"2 moving heads",detail:"Adds dimension to the party"},{name:"Haze machine",detail:"Where the venue allows"},{name:"Wireless microphone",detail:"Speeches & announcements"}],
    excludes:[],cta:"Book Premium"},
 ];
 const ADDONS_LIST=[
@@ -76,7 +76,7 @@ const ADDONS_LIST=[
 ];
 const CATALOGUE=[];
 PACKAGES.forEach(pkg=>{
-  CATALOGUE.push({group:"Packages",label:pkg.name+" — "+pkg.hours,desc:pkg.tagline+". Includes: "+pkg.includes.map(i=>i.name).join(", ")+".",rate:pkg.exGST,tag:pkg.tag});
+  CATALOGUE.push({group:"Packages",label:pkg.name+" ‚Äî "+pkg.hours,desc:pkg.tagline+". Includes: "+pkg.includes.map(i=>i.name).join(", ")+".",rate:pkg.exGST,tag:pkg.tag});
   pkg.includes.forEach(inc=>CATALOGUE.push({group:pkg.name.replace("THE ","")+" Inclusions",label:inc.name,desc:inc.detail,rate:0}));
 });
 ADDONS_LIST.forEach(a=>CATALOGUE.push({group:"Add-Ons & Extras",label:a.label,desc:"",rate:a.exGST}));
@@ -86,17 +86,17 @@ const DEFAULT_BIZ={name:"C-RAM Entertainment",abn:"",address:"Melbourne, VIC 300
 const SEED_CLIENTS=[
   {id:1,name:"Married to the Groove",type:"Corporate",phone:"0458 440 075",email:"josh@marriedtothegroove.com.au",status:"Confirmed",eventDate:"2027-03-13",venue:"TBC",notes:"Sub-contracting. INV-63 OVERDUE.",value:4600,paid:3150,abn:"",source:"Gmail"},
   {id:2,name:"Like This Entertainment",type:"Corporate",phone:"",email:"accounts@likethisentertainment.com.au",status:"Confirmed",eventDate:"2026-03-15",venue:"TBC",notes:"INV-61 + INV-62 paid.",value:3150,paid:3150,abn:"",source:"Gmail"},
-  {id:3,name:"Marc Joe — 40th Birthday",type:"Birthday",phone:"0432 775 402",email:"marc.joe@jbhifi.com.au",status:"Lead",eventDate:"2026-08-22",venue:"Fountain Gate Hotel",notes:"22 Aug 2026. Fountain Gate Hotel confirmed.",value:2200,paid:0,abn:"",source:"Gmail"},
+  {id:3,name:"Marc Joe ‚Äî 40th Birthday",type:"Birthday",phone:"0432 775 402",email:"marc.joe@jbhifi.com.au",status:"Lead",eventDate:"2026-08-22",venue:"Fountain Gate Hotel",notes:"22 Aug 2026. Fountain Gate Hotel confirmed.",value:2200,paid:0,abn:"",source:"Gmail"},
   {id:4,name:"Katie Vrej Wedding",type:"Wedding",phone:"",email:"",status:"Confirmed",eventDate:"2027-02-27",venue:"TBC",notes:"Hold via MTTG. GCal created.",value:0,paid:0,abn:"",source:"Gmail"},
-  {id:5,name:"Deborah — MTTG Opportunity",type:"Wedding",phone:"",email:"",status:"Opportunity",eventDate:"2026-11-01",venue:"Sophia at The Prahran Arcade",notes:"MTTG opportunity. Also Cutler, Gertrude St Fitzroy 25 Oct.",value:0,paid:0,abn:"",source:"Gmail"},
+  {id:5,name:"Deborah ‚Äî MTTG Opportunity",type:"Wedding",phone:"",email:"",status:"Opportunity",eventDate:"2026-11-01",venue:"Sophia at The Prahran Arcade",notes:"MTTG opportunity. Also Cutler, Gertrude St Fitzroy 25 Oct.",value:0,paid:0,abn:"",source:"Gmail"},
 ];
 const SEED_INVOICES=[
   {id:"INV-00063",client:"Married to the Groove",clientEmail:"josh@marriedtothegroove.com.au",clientPhone:"0458 440 075",clientABN:"",date:"2026-04-20",due:"2026-04-23",status:"Overdue",notes:"Payment overdue. Follow up urgently.",paymentRef:"INV-00063",
    items:[{catalogueLabel:"Wedding Gig",desc:"Wedding gig 18/04/2026 5-11pm\nCocktail set & Ceremony\n6 Hour set",qty:1,rate:1090.91},{catalogueLabel:"DJ Equipment",desc:"DJ Controller & Turntable and mixer",qty:1,rate:136.36},{catalogueLabel:"Travel fee",desc:"Travel fee",qty:1,rate:90.91}]},
   {id:"INV-00062",client:"Like This Entertainment",clientEmail:"accounts@likethisentertainment.com.au",clientPhone:"",clientABN:"",date:"2026-03-31",due:"2026-04-02",status:"Paid",notes:"",paymentRef:"INV-00062",
-   items:[{catalogueLabel:"Sub-Contract DJ Fee",desc:"DJ sub-contracting — wedding event",qty:1,rate:1090.91}]},
+   items:[{catalogueLabel:"Sub-Contract DJ Fee",desc:"DJ sub-contracting ‚Äî wedding event",qty:1,rate:1090.91}]},
   {id:"INV-00061",client:"Like This Entertainment",clientEmail:"accounts@likethisentertainment.com.au",clientPhone:"",clientABN:"",date:"2026-03-15",due:"2026-03-19",status:"Paid",notes:"",paymentRef:"INV-00061",
-   items:[{catalogueLabel:"Sub-Contract DJ Fee",desc:"DJ sub-contracting — event",qty:1,rate:1772.73}]},
+   items:[{catalogueLabel:"Sub-Contract DJ Fee",desc:"DJ sub-contracting ‚Äî event",qty:1,rate:1772.73}]},
 ];
 const SEED_DJS=[
   {id:1,name:"DJ C-RAM",role:"Founder & Lead DJ",styles:["Hip-Hop","RnB","House","Trap","Open Format"],rate:2800,available:true,bio:"20+ yrs. Culture Kings resident.",instagram:"@djc_ram"},
@@ -109,9 +109,9 @@ const CONTENT={
   corporate:[{type:"LinkedIn Pitch",platform:"LinkedIn",content:"Corporate events deserve more than a Spotify playlist.\n\nC-RAM Entertainment for product launches, end-of-year celebrations, gala dinners and brand activations.\n\nDM or visit c-rament.com.au"}],
   festivals:[{type:"Instagram Caption",platform:"Instagram",content:"Festival season is alive.\n\nNothing hits like an open air set when the crowd locks in.\nThis is where the MUCKIN magic happens.\n\nEnquire: c-rament.com.au\n\n#MelbourneDJ #FestivalDJ #OpenFormat #DJCRam"}],
 };
-const NAV=[{id:"dashboard",label:"Dashboard",icon:"⚡"},{id:"crm",label:"CRM",icon:"👥"},{id:"invoices",label:"Invoices",icon:"🧾"},{id:"roster",label:"DJ Roster",icon:"🎧"},{id:"content",label:"Content",icon:"📣"},{id:"packages",label:"Packages",icon:"🎶"},{id:"settings",label:"Settings",icon:"⚙️"},{id:"getintouch",label:"Get in Touch",icon:"📬"}];
+const NAV=[{id:"dashboard",label:"Dashboard",icon:"‚ö°"},{id:"crm",label:"CRM",icon:"üë•"},{id:"invoices",label:"Invoices",icon:"üßæ"},{id:"calendar",label:"Calendar",icon:"üìÖ"},{id:"roster",label:"DJ Roster",icon:"üéß"},{id:"packages",label:"Packages",icon:"üé∂"},{id:"specials",label:"Specials",icon:"‚úâÔ∏è"},{id:"settings",label:"Settings",icon:"‚öôÔ∏è"},{id:"getintouch",label:"Get in Touch",icon:"üì¨"}];
 
-// ── LINE ITEM ROW ─────────────────────────────────────────────────
+// ‚îÄ‚îÄ LINE ITEM ROW ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function LineItemRow({item,idx,onChange,onRemove}){
   const [open,setOpen]=useState(false);const [q,setQ]=useState("");
   const groups={};
@@ -125,7 +125,7 @@ function LineItemRow({item,idx,onChange,onRemove}){
         <div style={{position:"relative"}}>
           <div onClick={()=>setOpen(!open)} style={{background:C.surface,border:`1px solid ${open?C.gold:C.border}`,borderRadius:8,padding:"9px 36px 9px 12px",fontSize:13,cursor:"pointer",color:item.catalogueLabel?C.text:C.muted,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"relative"}}>
             {item.catalogueLabel||"Select package or service..."}
-            <span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontSize:10}}>{open?"▲":"▼"}</span>
+            <span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontSize:10}}>{open?"‚ñ≤":"‚ñº"}</span>
           </div>
           {open&&(
             <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:C.surface,border:`1px solid ${C.gold}`,borderRadius:10,zIndex:300,maxHeight:300,display:"flex",flexDirection:"column",boxShadow:"0 8px 32px #000a"}}>
@@ -155,7 +155,7 @@ function LineItemRow({item,idx,onChange,onRemove}){
         </div>
         <input type="number" min="1" style={{textAlign:"right",fontSize:13}} value={item.qty} onChange={e=>onChange(idx,"qty",e.target.value)}/>
         <input type="number" min="0" step="0.01" style={{textAlign:"right",fontSize:13}} placeholder="0.00" value={item.rate} onChange={e=>onChange(idx,"rate",e.target.value)}/>
-        <button onClick={()=>onRemove(idx)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"7px",fontSize:12}}>✕</button>
+        <button onClick={()=>onRemove(idx)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"7px",fontSize:12}}>‚úï</button>
       </div>
       <div>
         <label style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:0.5}}>Description on Invoice</label>
@@ -168,7 +168,7 @@ function LineItemRow({item,idx,onChange,onRemove}){
   );
 }
 
-// ── PDF INVOICE GENERATOR ─────────────────────────────────────────
+// ‚îÄ‚îÄ PDF INVOICE GENERATOR ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function generateInvoicePDF(inv, biz) {
   const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
   const gst = subtotal*0.1;
@@ -285,7 +285,7 @@ function generateInvoicePDF(inv, biz) {
     <div style="margin-top:8px;font-size:13px;color:#ddd"><span style="color:#888">Reference: </span><span style="font-weight:600;color:#fff">${inv.paymentRef||inv.id}</span></div>
     <div style="margin-top:4px;font-size:13px;color:#ddd"><span style="color:#888">ABN: </span><span style="font-weight:700;color:#F5C518">${biz.abn||"[ADD YOUR ABN IN SETTINGS]"}</span></div>
     ${inv.notes?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid #2A2A38;font-size:13px;color:#aaa;line-height:1.6">${inv.notes}</div>`:""}
-    <div style="margin-top:16px;text-align:center;font-size:12px;color:#555">${biz.name} · ${biz.email} · ${biz.website}</div>
+    <div style="margin-top:16px;text-align:center;font-size:12px;color:#555">${biz.name} ¬∑ ${biz.email} ¬∑ ${biz.website}</div>
   </div>
 </div></body></html>`;
   return html;
@@ -302,10 +302,10 @@ function downloadInvoicePDF(inv, biz, onDone) {
   iframe.contentDocument.close();
   // Add close button overlay so user can dismiss after printing
   const closeBtn = document.createElement("button");
-  closeBtn.textContent = "✕ Close Preview";
+  closeBtn.textContent = "‚úï Close Preview";
   closeBtn.style.cssText = "position:fixed;top:12px;right:12px;z-index:10000;background:#F5C518;color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;";
   const printBtn = document.createElement("button");
-  printBtn.textContent = "🖨 Print / Save as PDF";
+  printBtn.textContent = "üñ® Print / Save as PDF";
   printBtn.style.cssText = "position:fixed;top:12px;right:180px;z-index:10000;background:#00D48A;color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;";
   const cleanup = () => { document.body.removeChild(iframe); document.body.removeChild(closeBtn); document.body.removeChild(printBtn); onDone&&onDone(); };
   closeBtn.onclick = cleanup;
@@ -314,7 +314,7 @@ function downloadInvoicePDF(inv, biz, onDone) {
   document.body.appendChild(printBtn);
 }
 
-// ── EXPORT ALL DATA TO EXCEL (.xlsx, CSV fallback) ────────────────
+// ‚îÄ‚îÄ EXPORT ALL DATA TO EXCEL (.xlsx, CSV fallback) ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 async function exportAllToExcel(clients, invoices, djs, biz){
   const num = n => Number(n)||0;
 
@@ -361,7 +361,7 @@ async function exportAllToExcel(clients, invoices, djs, biz){
     "Account Name":biz.accountName,"Account No.":biz.account,"Instagram":biz.instagram,"Mixcloud":biz.mixcloud
   }).map(([k,v])=>({Field:k, Value:v||""}));
 
-  // ── EOFY SUMMARY (one row per financial year) ──
+  // ‚îÄ‚îÄ EOFY SUMMARY (one row per financial year) ‚îÄ‚îÄ
   const fySet = new Set();
   invoices.forEach(i=>{const f=getFY(i.date);if(f)fySet.add(f);});
   clients.forEach(c=>{const f=getFY(c.eventDate);if(f)fySet.add(f);});
@@ -385,7 +385,7 @@ async function exportAllToExcel(clients, invoices, djs, biz){
       "Outstanding (inc GST)": num(outstandingTotal),
       "Clients": fyClients.length,
       "Confirmed Gigs": fyClients.filter(c=>c.status==="Confirmed").length,
-      "ABN": biz.abn||"NOT SET — add in Settings",
+      "ABN": biz.abn||"NOT SET ‚Äî add in Settings",
     };
   });
 
@@ -421,14 +421,14 @@ async function exportAllToExcel(clients, invoices, djs, biz){
   }
 }
 
-// ── SEND MODAL ────────────────────────────────────────────────────
+// ‚îÄ‚îÄ SEND MODAL ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function SendModal({inv, biz, onClose, onSent}) {
   const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
   const total = (subtotal*1.1).toFixed(2);
   const totalStr = Number(total).toLocaleString("en-AU",{minimumFractionDigits:2});
   const dueStr = inv.due ? new Date(inv.due).toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}) : "";
 
-  const defaultSubject = `Invoice ${inv.id} from ${biz.name} — $${totalStr} inc GST`;
+  const defaultSubject = `Invoice ${inv.id} from ${biz.name} ‚Äî $${totalStr} inc GST`;
   const defaultBody =
 `Hi ${inv.client},
 
@@ -470,7 +470,7 @@ ${biz.name}`;
     `</div>`;
 
   const sendNow = async () => {
-    if (!inv.clientEmail) { setStatus("error"); setErrorMsg("No client email — add one in the CRM first."); return; }
+    if (!inv.clientEmail) { setStatus("error"); setErrorMsg("No client email ‚Äî add one in the CRM first."); return; }
     setStatus("sending"); setErrorMsg("");
     try {
       const res = await fetch("/api/send-email", {
@@ -482,11 +482,13 @@ ${biz.name}`;
           text: body,
           html: buildHtml(),
           replyTo: biz.email || undefined,
+          invoice: inv,
+          biz,
         }),
       });
       if (res.status === 404) {
         setStatus("error");
-        setErrorMsg("The email backend isn't running in this preview. Send Now works once the app is deployed (or run locally with vercel dev) — see the README. Until then, the Open in Gmail button below is a no-setup fallback.");
+        setErrorMsg("The email backend isn't running in this preview. Send Now works once the app is deployed (or run locally with vercel dev) ‚Äî see the README. Until then, the Open in Gmail button below is a no-setup fallback.");
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -496,7 +498,7 @@ ${biz.name}`;
       setTimeout(() => { onClose && onClose(); }, 1400);
     } catch (e) {
       setStatus("error");
-      setErrorMsg("Couldn't reach the email server. (Inside the Claude preview there's no backend — sending works once the app is deployed. See README.)");
+      setErrorMsg("Couldn't reach the email server. (Inside the Claude preview there's no backend ‚Äî sending works once the app is deployed. See README.)");
     }
   };
 
@@ -508,7 +510,7 @@ ${biz.name}`;
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:20,width:"100%",maxWidth:460,maxHeight:"92vh",overflow:"auto"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:22,letterSpacing:2,color:C.gold}}>Send {inv.id}</h3>
-          <button onClick={onClose} style={{background:"none",border:"none",color:C.muted,fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:C.muted,fontSize:20,cursor:"pointer",lineHeight:1}}>‚úï</button>
         </div>
 
         <div style={{background:C.bg,borderRadius:10,padding:12,marginBottom:14,fontSize:13}}>
@@ -518,7 +520,7 @@ ${biz.name}`;
         </div>
 
         <div style={{display:"flex",marginBottom:14,borderRadius:8,overflow:"hidden",border:`1px solid ${C.border}`}}>
-          {[["email","📧 Email"],["sms","💬 SMS"]].map(([id,label]) => (
+          {[["email","üìß Email"],["sms","üí¨ SMS"]].map(([id,label]) => (
             <button key={id} onClick={() => setTab(id)} style={{flex:1,padding:"9px 0",border:"none",background:tab===id?C.gold:C.surface,color:tab===id?"#000":C.muted,fontWeight:tab===id?700:400,fontFamily:"inherit",fontSize:13}}>
               {label}
             </button>
@@ -528,29 +530,29 @@ ${biz.name}`;
         {tab==="email" && (
           <div>
             <div style={{fontSize:12,color:C.muted,marginBottom:8}}>
-              <b style={{color:C.text}}>To:</b> {inv.clientEmail || <span style={{color:C.coral}}>No email — add in CRM</span>}
+              <b style={{color:C.text}}>To:</b> {inv.clientEmail || <span style={{color:C.coral}}>No email ‚Äî add in CRM</span>}
             </div>
 
             <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Subject</label>
             <input value={subject} onChange={e => setSubject(e.target.value)} style={{...inputStyle,marginBottom:10}} />
 
-            <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Message — review &amp; edit before sending</label>
+            <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Message ‚Äî review &amp; edit before sending</label>
             <textarea value={body} onChange={e => setBody(e.target.value)} rows={10} style={{...inputStyle,resize:"vertical",lineHeight:1.5,marginBottom:12}} />
 
-            {status==="sent" && <div style={{background:C.green+"22",color:C.green,border:`1px solid ${C.green}55`,borderRadius:8,padding:"9px 11px",fontSize:13,fontWeight:600,marginBottom:10}}>✓ Sent to {inv.clientEmail}</div>}
+            {status==="sent" && <div style={{background:C.green+"22",color:C.green,border:`1px solid ${C.green}55`,borderRadius:8,padding:"9px 11px",fontSize:13,fontWeight:600,marginBottom:10}}>‚úì Sent to {inv.clientEmail}</div>}
             {status==="error" && <div style={{background:C.coral+"22",color:C.coral,border:`1px solid ${C.coral}55`,borderRadius:8,padding:"9px 11px",fontSize:12.5,lineHeight:1.5,marginBottom:10}}>{errorMsg}</div>}
 
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               <button onClick={sendNow} disabled={status==="sending" || !inv.clientEmail}
                 style={{background:C.gold,color:"#000",fontWeight:700,border:"none",borderRadius:8,padding:"11px 0",fontSize:14,opacity:(status==="sending"||!inv.clientEmail)?0.55:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {status==="sending"
-                  ? <><span style={{width:13,height:13,border:"2px solid #000",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.7s linear infinite",display:"inline-block"}} /> Sending…</>
-                  : status==="sent" ? "✓ Sent" : "🚀 Send Now"}
+                  ? <><span style={{width:13,height:13,border:"2px solid #000",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.7s linear infinite",display:"inline-block"}} /> Sending‚Ä¶</>
+                  : status==="sent" ? "‚úì Sent" : "üöÄ Send Now"}
               </button>
 
               <div style={{display:"flex",gap:8}}>
                 <button onClick={() => copyText(`${subject}\n\n${body}`)} style={{flex:1,background:copied?C.green+"22":"transparent",color:copied?C.green:C.gold,border:`1px solid ${copied?C.green:C.gold}`,borderRadius:8,padding:"8px 0",fontSize:12.5}}>
-                  {copied ? "✓ Copied" : "📋 Copy"}
+                  {copied ? "‚úì Copied" : "üìã Copy"}
                 </button>
                 {inv.clientEmail && (
                   <a href={gmailHref} target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:"center",background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 0",fontSize:12.5,textDecoration:"none"}}>
@@ -566,12 +568,12 @@ ${biz.name}`;
         {tab==="sms" && (
           <div>
             <div style={{fontSize:12,color:C.muted,marginBottom:10}}>
-              <b style={{color:C.text}}>To:</b> {inv.clientPhone || <span style={{color:C.coral}}>No phone — add in CRM</span>}
+              <b style={{color:C.text}}>To:</b> {inv.clientPhone || <span style={{color:C.coral}}>No phone ‚Äî add in CRM</span>}
             </div>
             <textarea value={smsText} readOnly rows={6} style={{...inputStyle,resize:"vertical",lineHeight:1.5,marginBottom:12}} />
             <div style={{display:"flex",gap:8}}>
-              <button onClick={() => copyText(smsText)} style={{flex:1,background:copied?C.green+"22":"transparent",color:copied?C.green:C.gold,border:`1px solid ${copied?C.green:C.gold}`,borderRadius:8,padding:"9px 0",fontSize:13}}>{copied ? "✓ Copied" : "📋 Copy SMS"}</button>
-              {inv.clientPhone && <button onClick={openSMS} style={{flex:1,background:C.gold,color:"#000",fontWeight:700,border:"none",borderRadius:8,padding:"9px 0",fontSize:13}}>💬 Open SMS</button>}
+              <button onClick={() => copyText(smsText)} style={{flex:1,background:copied?C.green+"22":"transparent",color:copied?C.green:C.gold,border:`1px solid ${copied?C.green:C.gold}`,borderRadius:8,padding:"9px 0",fontSize:13}}>{copied ? "‚úì Copied" : "üìã Copy SMS"}</button>
+              {inv.clientPhone && <button onClick={openSMS} style={{flex:1,background:C.gold,color:"#000",fontWeight:700,border:"none",borderRadius:8,padding:"9px 0",fontSize:13}}>üí¨ Open SMS</button>}
             </div>
           </div>
         )}
@@ -580,9 +582,9 @@ ${biz.name}`;
   );
 }
 
-// ── FINANCIAL YEAR HELPERS (AU: 1 Jul – 30 Jun) ─────────────────
-// getFY("2026-03-15") → "FY 2025-26"  (falls in July 2025 – June 2026)
-// getFY("2026-08-01") → "FY 2026-27"
+// ‚îÄ‚îÄ FINANCIAL YEAR HELPERS (AU: 1 Jul ‚Äì 30 Jun) ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// getFY("2026-03-15") ‚Üí "FY 2025-26"  (falls in July 2025 ‚Äì June 2026)
+// getFY("2026-08-01") ‚Üí "FY 2026-27"
 function getFY(dateStr){
   if(!dateStr)return null;
   const d=new Date(dateStr);if(isNaN(d))return null;
@@ -600,7 +602,7 @@ function allFYs(clients,invoices){
 }
 function invTotal(inv){return inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1;}
 
-// ── DASHBOARD ─────────────────────────────────────────────────────
+// ‚îÄ‚îÄ DASHBOARD ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Dashboard({clients,invoices,djs,setTab}){
   const [fy,setFy]=useState(currentFY());
   const years=allFYs(clients,invoices);
@@ -617,7 +619,7 @@ function Dashboard({clients,invoices,djs,setTab}){
     <div style={{animation:"slideIn 0.3s ease"}}>
       <div style={{textAlign:"center",marginBottom:22}}>
         <LogoW height={72}/>
-        <p style={{color:C.muted,fontSize:13,marginTop:10}}>Business Command Centre — Melbourne, VIC</p>
+        <p style={{color:C.muted,fontSize:13,marginTop:10}}>Business Command Centre ‚Äî Melbourne, VIC</p>
         <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:10,flexWrap:"wrap",alignItems:"center"}}>
           <select value={fy} onChange={e=>setFy(e.target.value)} style={{background:C.surface,color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:8,padding:"5px 12px",fontSize:13,fontWeight:700,fontFamily:"Bebas Neue,sans-serif",letterSpacing:1}}>
             {years.map(y=><option key={y} value={y}>{y}</option>)}
@@ -627,12 +629,12 @@ function Dashboard({clients,invoices,djs,setTab}){
       </div>
       {overdue.length>0&&(
         <div onClick={()=>setTab("invoices")} style={{background:C.coral+"15",border:`1px solid ${C.coral}55`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
-          <span style={{fontSize:18}}>⚠️</span>
+          <span style={{fontSize:18}}>‚ö†Ô∏è</span>
           <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:700,color:C.coral}}>Overdue Invoice — tap to action</div>
+            <div style={{fontSize:13,fontWeight:700,color:C.coral}}>Overdue Invoice ‚Äî tap to action</div>
             <div style={{fontSize:12,color:C.muted}}>{overdue.map(i=>i.id+" ("+i.client+")").join(", ")}</div>
           </div>
-          <span style={{color:C.coral}}>→</span>
+          <span style={{color:C.coral}}>‚Üí</span>
         </div>
       )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
@@ -658,13 +660,13 @@ function Dashboard({clients,invoices,djs,setTab}){
         </Card>
         <Card>
           <h3 style={{fontSize:11,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Quick Actions</h3>
-          {[{icon:"🧾",label:"New Invoice",tab:"invoices"},{icon:"👥",label:"Add Client",tab:"crm"},{icon:"⚙️",label:"Business Settings",tab:"settings"},{icon:"🎶",label:"View Packages",tab:"packages"},{icon:"📣",label:"Content Hub",tab:"content"}].map(a=>(
+          {[{icon:"üßæ",label:"New Invoice",tab:"invoices"},{icon:"üë•",label:"Add Client",tab:"crm"},{icon:"‚öôÔ∏è",label:"Business Settings",tab:"settings"},{icon:"üé∂",label:"View Packages",tab:"packages"}].map(a=>(
             <div key={a.label} onClick={()=>setTab(a.tab)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:`1px solid ${C.border}`,cursor:"pointer"}}
               onMouseEnter={e=>e.currentTarget.style.opacity="0.7"}
               onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
               <span style={{fontSize:18}}>{a.icon}</span>
               <div style={{fontWeight:600,fontSize:13,color:C.gold}}>{a.label}</div>
-              <span style={{marginLeft:"auto",color:C.muted}}>→</span>
+              <span style={{marginLeft:"auto",color:C.muted}}>‚Üí</span>
             </div>
           ))}
         </Card>
@@ -673,7 +675,7 @@ function Dashboard({clients,invoices,djs,setTab}){
   );
 }
 
-// ── CRM ───────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ CRM ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   const [view,setView]=useState("list");const [sel,setSel]=useState(null);const [filter,setFilter]=useState("All");
   const [busy,setBusy]=useState(false);
@@ -707,7 +709,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   if(view==="edit"||view==="new")return(
     <div style={{animation:"slideIn 0.3s ease",maxWidth:640}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <Btn variant="ghost" onClick={()=>{setView("list");setSel(null);}}>← Back</Btn>
+        <Btn variant="ghost" onClick={()=>{setView("list");setSel(null);}}>‚Üê Back</Btn>
         <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{view==="new"?"New Client":"Edit Client"}</h2>
       </div>
       <Card>
@@ -745,7 +747,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
     return(
       <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,flexWrap:"wrap"}}>
-          <Btn variant="ghost" onClick={()=>{setView("list");setSel(null);}}>← Back</Btn>
+          <Btn variant="ghost" onClick={()=>{setView("list");setSel(null);}}>‚Üê Back</Btn>
           <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,letterSpacing:1,color:C.gold}}>{c.name}</h2>
           <Badge label={c.type} color={C.purple}/><Badge label={c.status} color={sCol(c.status)}/>
           {c.source==="Gmail"&&<Badge label="Gmail" color={C.green}/>}
@@ -764,8 +766,8 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
         </div>
         <Card style={{marginTop:12}}><h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Notes</h4><p style={{fontSize:13,lineHeight:1.7}}>{c.notes||"No notes."}</p></Card>
         <div style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap"}}>
-          <Btn onClick={()=>openEdit(c)}>✏️ Edit</Btn>
-          <Btn variant="green" onClick={()=>createInvoice(c)}>🧾 Create Invoice</Btn>
+          <Btn onClick={()=>openEdit(c)}>‚úèÔ∏è Edit</Btn>
+          <Btn variant="green" onClick={()=>createInvoice(c)}>üßæ Create Invoice</Btn>
           <Btn variant="danger" onClick={()=>del(c)}>Delete</Btn>
         </div>
       </div>
@@ -774,7 +776,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <div><h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Client CRM</h2><div style={{fontSize:12,color:C.green,marginTop:2}}>✓ Synced from Gmail</div></div>
+        <div><h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Client CRM</h2><div style={{fontSize:12,color:C.green,marginTop:2}}>‚úì Synced from Gmail</div></div>
         <Btn onClick={()=>setView("new")}>+ Add Client</Btn>
       </div>
       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
@@ -793,14 +795,14 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
                   <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
                     <Badge label={c.type} color={C.purple}/><Badge label={c.status} color={sCol(c.status)}/>
                     {c.source==="Gmail"&&<Badge label="Gmail" color={C.green}/>}
-                    {c.eventDate&&<span style={{fontSize:11,color:C.muted}}>📅 {fmtD(c.eventDate)}</span>}
+                    {c.eventDate&&<span style={{fontSize:11,color:C.muted}}>üìÖ {fmtD(c.eventDate)}</span>}
                   </div>
                 </div>
                 <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
                   <div style={{fontSize:20,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{fmt$(c.value)}</div>
                   <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                    <button onClick={()=>openEdit(c)} style={{background:C.gold+"22",color:C.gold,border:"none",borderRadius:6,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:600}}>✏️ Edit</button>
-                    <button onClick={()=>createInvoice(c)} style={{background:C.green+"22",color:C.green,border:"none",borderRadius:6,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:600}}>🧾 Invoice</button>
+                    <button onClick={()=>openEdit(c)} style={{background:C.gold+"22",color:C.gold,border:"none",borderRadius:6,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:600}}>‚úèÔ∏è Edit</button>
+                    <button onClick={()=>createInvoice(c)} style={{background:C.green+"22",color:C.green,border:"none",borderRadius:6,padding:"4px 9px",fontSize:11,cursor:"pointer",fontWeight:600}}>üßæ Invoice</button>
                     <button onClick={()=>{setSel(c);setView("detail");}} style={{background:C.surface,color:C.muted,border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 9px",fontSize:11,cursor:"pointer"}}>View</button>
                   </div>
                 </div>
@@ -814,7 +816,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   );
 }
 
-// ── INVOICES ─────────────────────────────────────────────────────
+// ‚îÄ‚îÄ INVOICES ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoiceStatus}){
   const pendingOpen = PENDING_INVOICE;
   const [view,setView]=useState(pendingOpen?"form":"list");
@@ -857,10 +859,10 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
     <div style={{animation:"slideIn 0.3s ease",maxWidth:720}}>
       {sending&&<SendModal inv={sending} biz={biz} onClose={()=>setSending(null)} onSent={()=>{onSetInvoiceStatus(sending,"Sent");setSending(null);}}/>}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18,flexWrap:"wrap"}}>
-        <Btn variant="ghost" onClick={()=>{setView("list");setEditing(null);}}>← Back</Btn>
+        <Btn variant="ghost" onClick={()=>{setView("list");setEditing(null);}}>‚Üê Back</Btn>
         <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{editing?"Edit Invoice":"New Tax Invoice"}</h2>
-        {editing&&<Btn variant="green" onClick={()=>handlePDF(invoices.find(i=>i.id===editing)||{...form,id:editing})}>🖨 PDF</Btn>}
-        {editing&&<Btn variant="outline" onClick={()=>setSending(invoices.find(i=>i.id===editing)||{...form,id:editing})}>📤 Send</Btn>}
+        {editing&&<Btn variant="green" onClick={()=>handlePDF(invoices.find(i=>i.id===editing)||{...form,id:editing})}>üñ® PDF</Btn>}
+        {editing&&<Btn variant="outline" onClick={()=>setSending(invoices.find(i=>i.id===editing)||{...form,id:editing})}>üì§ Send</Btn>}
       </div>
       <Card style={{marginBottom:12}}>
         <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Invoice Details</h4>
@@ -915,7 +917,7 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
         <textarea rows={2} value={form.notes||""} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="e.g. 50% deposit due on acceptance. Balance due 7 days prior to event." style={{marginTop:8}}/>
       </Card>
       <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-        <Btn onClick={save} disabled={!form.client}>💾 Save Invoice</Btn>
+        <Btn onClick={save} disabled={!form.client}>üíæ Save Invoice</Btn>
         <Btn variant="ghost" onClick={()=>{setView("list");setEditing(null);}}>Cancel</Btn>
       </div>
     </div>
@@ -947,16 +949,16 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
                     <Badge label={inv.status} color={sCol(inv.status)}/>
                   </div>
                   <div style={{fontSize:14,fontWeight:600}}>{inv.client}</div>
-                  <div style={{fontSize:11,color:C.muted,marginTop:2}}>Issued: {fmtD(inv.date)}{inv.due?" · Due: "+fmtD(inv.due):""}</div>
+                  <div style={{fontSize:11,color:C.muted,marginTop:2}}>Issued: {fmtD(inv.date)}{inv.due?" ¬∑ Due: "+fmtD(inv.due):""}</div>
                 </div>
                 <div style={{textAlign:"right"}}>
                   <div style={{fontSize:22,fontFamily:"Bebas Neue,sans-serif",color:inv.status==="Paid"?C.green:inv.status==="Overdue"?C.coral:C.gold}}>{fmt$(tot)}</div>
                   <div style={{fontSize:10,color:C.dim}}>inc GST</div>
                   <div style={{display:"flex",gap:5,justifyContent:"flex-end",marginTop:6,flexWrap:"wrap"}}>
-                    <Btn variant="green" onClick={()=>handlePDF(inv)} style={{fontSize:11,padding:"4px 9px"}}>🖨 PDF</Btn>
-                    <Btn variant="outline" onClick={()=>setSending(inv)} style={{fontSize:11,padding:"4px 9px"}}>📤 Send</Btn>
-                    <Btn variant="outline" onClick={()=>openEdit(inv)} style={{fontSize:11,padding:"4px 9px"}}>✏️ Edit</Btn>
-                    {inv.status!=="Paid"&&<Btn variant="ghost" onClick={()=>onSetInvoiceStatus(inv,"Paid")} style={{fontSize:11,padding:"4px 9px",color:C.green,borderColor:C.green}}>✓ Paid</Btn>}
+                    <Btn variant="green" onClick={()=>handlePDF(inv)} style={{fontSize:11,padding:"4px 9px"}}>üñ® PDF</Btn>
+                    <Btn variant="outline" onClick={()=>setSending(inv)} style={{fontSize:11,padding:"4px 9px"}}>üì§ Send</Btn>
+                    <Btn variant="outline" onClick={()=>openEdit(inv)} style={{fontSize:11,padding:"4px 9px"}}>‚úèÔ∏è Edit</Btn>
+                    {inv.status!=="Paid"&&<Btn variant="ghost" onClick={()=>onSetInvoiceStatus(inv,"Paid")} style={{fontSize:11,padding:"4px 9px",color:C.green,borderColor:C.green}}>‚úì Paid</Btn>}
                     <Btn variant="ghost" onClick={()=>onDeleteInvoice(inv)} style={{fontSize:11,padding:"4px 9px",color:C.coral}}>Delete</Btn>
                   </div>
                 </div>
@@ -969,7 +971,7 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
   );
 }
 
-// ── SETTINGS ─────────────────────────────────────────────────────
+// ‚îÄ‚îÄ SETTINGS ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Settings({biz,onSaveBiz}){
   const [form,setForm]=useState({...biz});
   const [saved,setSaved]=useState(false);
@@ -999,24 +1001,24 @@ function Settings({biz,onSaveBiz}){
         <div style={{background:"#fff",borderRadius:10,padding:24,display:"flex",justifyContent:"center",alignItems:"center"}}>
           <LogoB height={60}/>
         </div>
-        <p style={{fontSize:12,color:C.muted,marginTop:10,textAlign:"center"}}>White version (dark backgrounds) · Black version (PDF invoices)</p>
+        <p style={{fontSize:12,color:C.muted,marginTop:10,textAlign:"center"}}>White version (dark backgrounds) ¬∑ Black version (PDF invoices)</p>
       </Card>
 
       <Card style={{marginBottom:16}}>
         <h3 style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Company Details</h3>
         {!form.abn&&(
           <div style={{background:C.coral+"18",border:`1px solid ${C.coral}55`,borderRadius:8,padding:"10px 14px",marginBottom:14,display:"flex",gap:10,alignItems:"flex-start"}}>
-            <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
+            <span style={{fontSize:16,flexShrink:0}}>‚ö†Ô∏è</span>
             <div>
               <div style={{fontSize:13,fontWeight:700,color:C.coral}}>ABN not set</div>
-              <div style={{fontSize:12,color:C.muted,marginTop:2}}>Your ABN is required on all Australian tax invoices. Add it below and save — it will appear on every invoice you generate.</div>
+              <div style={{fontSize:12,color:C.muted,marginTop:2}}>Your ABN is required on all Australian tax invoices. Add it below and save ‚Äî it will appear on every invoice you generate.</div>
             </div>
           </div>
         )}
         {form.abn&&(
           <div style={{background:C.green+"15",border:`1px solid ${C.green}44`,borderRadius:8,padding:"10px 14px",marginBottom:14,display:"flex",gap:10,alignItems:"center"}}>
-            <span style={{fontSize:16}}>✅</span>
-            <div style={{fontSize:13,fontWeight:700,color:C.green}}>ABN {form.abn} — will appear on all invoices</div>
+            <span style={{fontSize:16}}>‚úÖ</span>
+            <div style={{fontSize:13,fontWeight:700,color:C.green}}>ABN {form.abn} ‚Äî will appear on all invoices</div>
           </div>
         )}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -1038,7 +1040,7 @@ function Settings({biz,onSaveBiz}){
       <Card style={{marginBottom:16}}>
         <h3 style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Bank & Payment Details</h3>
         <div style={{background:C.coral+"15",border:`1px solid ${C.coral}44`,borderRadius:8,padding:10,marginBottom:14,fontSize:12,color:C.muted}}>
-          ⚠️ These appear on every tax invoice — double-check BSB and account number carefully
+          ‚ö†Ô∏è These appear on every tax invoice ‚Äî double-check BSB and account number carefully
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <Field label="Bank Name" field="bank" placeholder="e.g. Commonwealth Bank"/>
@@ -1057,14 +1059,14 @@ function Settings({biz,onSaveBiz}){
       </Card>
 
       <div style={{display:"flex",gap:10,alignItems:"center"}}>
-        <Btn onClick={save}>💾 Save Settings</Btn>
-        {saved&&<span style={{fontSize:13,color:C.green,fontWeight:600}}>✓ Saved! Invoice details updated.</span>}
+        <Btn onClick={save}>üíæ Save Settings</Btn>
+        {saved&&<span style={{fontSize:13,color:C.green,fontWeight:600}}>‚úì Saved! Invoice details updated.</span>}
       </div>
     </div>
   );
 }
 
-// ── DJ ROSTER ─────────────────────────────────────────────────────
+// ‚îÄ‚îÄ DJ ROSTER ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Roster({djs,onSaveDj,onToggleDj}){
   const [editing,setEditing]=useState(null);const [form,setForm]=useState({});
   const startEdit=dj=>{setEditing(dj.id);setForm({...dj});};
@@ -1107,7 +1109,7 @@ function Roster({djs,onSaveDj,onToggleDj}){
                   <div style={{fontSize:16,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{fmt$(dj.rate)}<span style={{fontSize:10,color:C.muted,fontFamily:"Inter,sans-serif"}}>/event</span></div>
                   <div style={{display:"flex",gap:5}}>
                     <button onClick={()=>onToggleDj(dj)} style={{background:dj.available?C.coral+"22":C.green+"22",color:dj.available?C.coral:C.green,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>{dj.available?"Busy":"Free"}</button>
-                    <button onClick={()=>startEdit(dj)} style={{background:C.gold+"22",color:C.gold,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>✏️ Edit</button>
+                    <button onClick={()=>startEdit(dj)} style={{background:C.gold+"22",color:C.gold,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>‚úèÔ∏è Edit</button>
                   </div>
                 </div>
               </>
@@ -1138,11 +1140,170 @@ function Content(){
           <Card key={idx}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><Badge label={post.type} color={C.gold}/><Badge label={post.platform} color={pCol(post.platform)}/></div>
-              <button onClick={()=>copy(post.content,idx)} style={{background:copied===idx?C.green+"22":C.surface,color:copied===idx?C.green:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:600}}>{copied===idx?"✓ Copied!":"Copy"}</button>
+              <button onClick={()=>copy(post.content,idx)} style={{background:copied===idx?C.green+"22":C.surface,color:copied===idx?C.green:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:600}}>{copied===idx?"‚úì Copied!":"Copy"}</button>
             </div>
             <pre style={{fontFamily:"Inter,sans-serif",fontSize:12,color:C.text,whiteSpace:"pre-wrap",lineHeight:1.7,background:C.bg,padding:12,borderRadius:8}}>{post.content}</pre>
           </Card>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ‚îÄ‚îÄ SPECIALS (bulk promo email ‚Äî recipients stay private) ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+const DEFAULT_SPECIAL_BODY =
+`Hi there,
+
+Big news from C-RAM Entertainment.
+
+[ Put your special offer here ‚Äî e.g. "Book any wedding package before the end of the month and get free uplighting." ]
+
+Melbourne's most trusted event DJ ‚Äî 20+ years, hundreds of events.
+
+To lock in a date or ask a question, just reply to this email or call 0432 775 402.
+
+Cheers,
+Marc
+C-RAM Entertainment
+c-rament.com.au`;
+
+function Specials({clients, biz}){
+  const withEmail = clients.filter(c => c.email && c.email.includes("@"));
+  const skipped = clients.length - withEmail.length;
+  const [selected, setSelected] = useState(() => new Set());
+  const [subject, setSubject] = useState("A special offer from C-RAM Entertainment");
+  const [body, setBody] = useState(DEFAULT_SPECIAL_BODY);
+  const [status, setStatus] = useState("idle"); // idle | sending | done | error
+  const [progress, setProgress] = useState({sent:0, total:0, fails:[]});
+  const [copied, setCopied] = useState(false);
+
+  const toggle = id => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const selectAll = () => setSelected(new Set(withEmail.map(c => c.id)));
+  const clearAll  = () => setSelected(new Set());
+  const chosen = withEmail.filter(c => selected.has(c.id));
+  const emails = chosen.map(c => c.email);
+
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const gmailHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(biz.email||"")}&bcc=${encodeURIComponent(emails.join(","))}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  const copyList = () => {
+    try { navigator.clipboard.writeText(emails.join(", ")); setCopied(true); setTimeout(()=>setCopied(false),2000); } catch(e){}
+  };
+
+  const sendFromHub = async () => {
+    if (!chosen.length) return;
+    setStatus("sending"); setProgress({sent:0, total:chosen.length, fails:[]});
+    let sent = 0; const fails = [];
+    for (const c of chosen) {
+      const personal = body.replace(/\{name\}/gi, (c.name || "there").split(" ")[0]);
+      try {
+        const res = await fetch("/api/send-email", {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({
+            to: c.email, subject, text: personal,
+            html: `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#1a1a1a">${esc(personal).replace(/\n/g,"<br>")}</div>`,
+            replyTo: biz.email || undefined,
+          }),
+        });
+        if (res.ok) sent++; else fails.push(c.name || c.email);
+      } catch(e) { fails.push(c.name || c.email); }
+      setProgress({sent, total:chosen.length, fails:[...fails]});
+    }
+    setStatus(fails.length ? "error" : "done");
+  };
+
+  return (
+    <div style={{animation:"slideIn 0.3s ease"}}>
+      <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold,marginBottom:4}}>Specials</h2>
+      <p style={{color:C.muted,fontSize:12,marginBottom:16}}>Send a promo to your clients ‚Äî every recipient stays private, nobody sees anyone else's email.</p>
+
+      <Card style={{marginBottom:14}}>
+        <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Subject</label>
+        <input value={subject} onChange={e=>setSubject(e.target.value)} style={{width:"100%",background:C.bg,color:C.text,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 11px",fontSize:13,fontFamily:"inherit",marginBottom:12}} />
+        <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Message</label>
+        <textarea value={body} onChange={e=>setBody(e.target.value)} rows={13} style={{width:"100%",background:C.bg,color:C.text,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 11px",fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.6}} />
+        <p style={{fontSize:11,color:C.dim,marginTop:6}}>Tip: type <b style={{color:C.muted}}>{"{name}"}</b> and the "one private email each" option below will swap in each person's first name. (The Gmail/BCC option sends one shared message, so it can't personalise.)</p>
+      </Card>
+
+      <Card style={{marginBottom:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+          <div style={{fontSize:13,fontWeight:700,color:C.text}}>Choose who to send to <span style={{color:C.gold}}>({chosen.length} selected)</span></div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={selectAll} style={{background:"transparent",color:C.gold,border:`1px solid ${C.gold}`,borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer"}}>Select all</button>
+            <button onClick={clearAll} style={{background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer"}}>Clear</button>
+          </div>
+        </div>
+        <div style={{maxHeight:280,overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+          {withEmail.length===0 && <div style={{color:C.muted,fontSize:13,padding:"8px 0"}}>No clients with an email address yet. Add emails in the CRM tab.</div>}
+          {withEmail.map(c=>{
+            const on = selected.has(c.id);
+            return (
+              <div key={c.id} onClick={()=>toggle(c.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 11px",borderRadius:8,cursor:"pointer",background:on?C.gold+"14":C.bg,border:`1px solid ${on?C.gold+"55":C.border}`}}>
+                <span style={{width:18,height:18,borderRadius:5,border:`2px solid ${on?C.gold:C.border}`,background:on?C.gold:"transparent",color:"#000",fontSize:12,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{on?"‚úì":""}</span>
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontSize:13,color:C.text,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
+                  <div style={{fontSize:11,color:C.muted,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.email}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {skipped>0 && <p style={{fontSize:11,color:C.dim,marginTop:8}}>{skipped} client{skipped>1?"s":""} skipped ‚Äî no email on file. Add emails in the CRM to include them.</p>}
+      </Card>
+
+      <Card>
+        <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.6}}>
+          üîí <b style={{color:C.text}}>Both options keep customers private.</b> Nobody can see who else received it.
+        </div>
+
+        {status==="done" && <div style={{background:C.green+"22",color:C.green,border:`1px solid ${C.green}55`,borderRadius:8,padding:"9px 11px",fontSize:13,fontWeight:600,marginBottom:10}}>‚úì Sent {progress.sent} email{progress.sent>1?"s":""} from the hub.</div>}
+        {status==="sending" && <div style={{background:C.gold+"18",color:C.gold,border:`1px solid ${C.gold}44`,borderRadius:8,padding:"9px 11px",fontSize:13,marginBottom:10}}>Sending‚Ä¶ {progress.sent} of {progress.total}</div>}
+        {status==="error" && <div style={{background:C.coral+"22",color:C.coral,border:`1px solid ${C.coral}55`,borderRadius:8,padding:"9px 11px",fontSize:12.5,lineHeight:1.5,marginBottom:10}}>Sent {progress.sent} of {progress.total}. Couldn't send to: {progress.fails.join(", ")}. If none went through, the hub's email backend may be down ‚Äî use "Open in Gmail" below instead.</div>}
+
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <a href={chosen.length?gmailHref:undefined} target="_blank" rel="noopener noreferrer"
+             style={{textAlign:"center",background:C.gold,color:"#000",fontWeight:700,borderRadius:8,padding:"12px 0",fontSize:14,textDecoration:"none",opacity:chosen.length?1:0.45,pointerEvents:chosen.length?"auto":"none"}}>
+            ‚úâÔ∏è Open in Gmail ‚Äî everyone hidden (BCC)
+          </a>
+          <button onClick={sendFromHub} disabled={!chosen.length || status==="sending"}
+             style={{background:"transparent",color:C.gold,fontWeight:700,border:`1px solid ${C.gold}`,borderRadius:8,padding:"11px 0",fontSize:14,opacity:(!chosen.length||status==="sending")?0.45:1,cursor:(!chosen.length||status==="sending")?"default":"pointer"}}>
+            {status==="sending" ? "Sending‚Ä¶" : "üöÄ Send from the hub ‚Äî one private email each"}
+          </button>
+          <button onClick={copyList} disabled={!chosen.length} style={{background:copied?C.green+"22":"transparent",color:copied?C.green:C.muted,border:`1px solid ${copied?C.green:C.border}`,borderRadius:8,padding:"8px 0",fontSize:12.5,opacity:chosen.length?1:0.45,cursor:chosen.length?"pointer":"default"}}>
+            {copied ? "‚úì Copied" : "üìã Copy the selected email addresses"}
+          </button>
+        </div>
+        <p style={{fontSize:11,color:C.dim,marginTop:10,lineHeight:1.5}}>
+          <b style={{color:C.muted}}>Open in Gmail</b> = one email to everyone in BCC; you review it in Gmail and press Send. Works every time, no setup.<br/>
+          <b style={{color:C.muted}}>Send from the hub</b> = a separate personalised email to each person, sent straight away (needs the hub's email sender working).
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+// ‚îÄ‚îÄ CALENDAR (embedded Google Calendar) ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+function CalendarTab({biz}){
+  const [calId, setCalId] = useState(biz.email && biz.email.includes("@") ? biz.email : "djc.ram.bookings@gmail.com");
+  const src = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calId)}&ctz=Australia%2FMelbourne&mode=MONTH&wkst=1&showTitle=0&showPrint=0&showTz=0`;
+  return (
+    <div style={{animation:"slideIn 0.3s ease"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,flexWrap:"wrap",gap:8}}>
+        <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Calendar</h2>
+        <div style={{display:"flex",gap:8}}>
+          <a href="https://calendar.google.com/calendar/u/0/r/eventedit" target="_blank" rel="noopener noreferrer" style={{background:C.gold,color:"#000",fontWeight:700,borderRadius:8,padding:"7px 14px",fontSize:12.5,textDecoration:"none"}}>Ôºã Add event</a>
+          <a href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer" style={{background:"transparent",color:C.gold,border:`1px solid ${C.gold}`,borderRadius:8,padding:"7px 14px",fontSize:12.5,textDecoration:"none"}}>Open in Google ‚Üó</a>
+        </div>
+      </div>
+      <p style={{color:C.muted,fontSize:12,marginBottom:14}}>Your bookings at a glance. To see private events, be signed into <b style={{color:C.text}}>{calId}</b> in this browser (or set that Google Calendar to public).</p>
+
+      <Card style={{marginBottom:14}}>
+        <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Calendar to show (Google account email or calendar ID)</label>
+        <input value={calId} onChange={e=>setCalId(e.target.value.trim())} placeholder="djc.ram.bookings@gmail.com" style={{width:"100%",background:C.bg,color:C.text,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 11px",fontSize:13,fontFamily:"inherit"}} />
+      </Card>
+
+      <div style={{background:"#fff",borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`}}>
+        <iframe title="Google Calendar" src={src} style={{border:0,width:"100%",height:"70vh",minHeight:520,display:"block"}} frameBorder="0" scrolling="no"></iframe>
       </div>
     </div>
   );
@@ -1188,7 +1349,7 @@ function Packages({packages,addons,onSavePackage,onDeletePackage,onSaveAddon,onD
     return(
       <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-          <Btn variant="ghost" onClick={cancel}>← Back</Btn>
+          <Btn variant="ghost" onClick={cancel}>‚Üê Back</Btn>
           <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{editing==="new"?"New Package":"Edit Package"}</h2>
         </div>
         <Card style={{marginBottom:12}}>
@@ -1211,7 +1372,7 @@ function Packages({packages,addons,onSavePackage,onDeletePackage,onSaveAddon,onD
                 <input value={it.name} placeholder="Item (e.g. 5-hour set)" onChange={e=>setInc(i,"name",e.target.value)}/>
                 <input value={it.detail} placeholder="Detail (e.g. 11pm cut-off)" onChange={e=>setInc(i,"detail",e.target.value)} style={{fontSize:12}}/>
               </div>
-              <button onClick={()=>remInc(i)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"8px 10px",fontSize:12,cursor:"pointer"}}>✕</button>
+              <button onClick={()=>remInc(i)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"8px 10px",fontSize:12,cursor:"pointer"}}>‚úï</button>
             </div>
           ))}
           <Btn variant="ghost" onClick={addInc} style={{fontSize:12}}>+ Add included item</Btn>
@@ -1221,12 +1382,12 @@ function Packages({packages,addons,onSavePackage,onDeletePackage,onSaveAddon,onD
           {form.excludes.map((ex,i)=>(
             <div key={i} style={{display:"flex",gap:6,marginBottom:8}}>
               <input value={ex} placeholder="e.g. Moving heads" onChange={e=>setExc(i,e.target.value)} style={{flex:1}}/>
-              <button onClick={()=>remExc(i)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"8px 10px",fontSize:12,cursor:"pointer"}}>✕</button>
+              <button onClick={()=>remExc(i)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"8px 10px",fontSize:12,cursor:"pointer"}}>‚úï</button>
             </div>
           ))}
           <Btn variant="ghost" onClick={addExc} style={{fontSize:12}}>+ Add not-included item</Btn>
         </Card>
-        <div style={{display:"flex",gap:10}}><Btn onClick={savePkg} disabled={busy}>{busy?"Saving…":"💾 Save Package"}</Btn><Btn variant="ghost" onClick={cancel}>Cancel</Btn></div>
+        <div style={{display:"flex",gap:10}}><Btn onClick={savePkg} disabled={busy}>{busy?"Saving‚Ä¶":"üíæ Save Package"}</Btn><Btn variant="ghost" onClick={cancel}>Cancel</Btn></div>
       </div>
     );
   }
@@ -1250,13 +1411,13 @@ function Packages({packages,addons,onSavePackage,onDeletePackage,onSaveAddon,onD
               </div>
               <p style={{fontSize:12,color:C.muted,marginBottom:8}}>{pk.tagline}</p>
               <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:34,color:accent===C.muted?C.text:accent,lineHeight:1}}>{fmt$(pk.price)}</div>
-              <div style={{fontSize:11,color:C.muted,marginBottom:10}}>{pk.hours} · inc GST</div>
+              <div style={{fontSize:11,color:C.muted,marginBottom:10}}>{pk.hours} ¬∑ inc GST</div>
               <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:10}}>
-                {(pk.includes||[]).slice(0,6).map((it,i)=><div key={i} style={{fontSize:12}}><span style={{color:C.green}}>✓ </span>{it.name}</div>)}
-                {(pk.includes||[]).length>6&&<div style={{fontSize:11,color:C.dim}}>+{pk.includes.length-6} more…</div>}
+                {(pk.includes||[]).slice(0,6).map((it,i)=><div key={i} style={{fontSize:12}}><span style={{color:C.green}}>‚úì </span>{it.name}</div>)}
+                {(pk.includes||[]).length>6&&<div style={{fontSize:11,color:C.dim}}>+{pk.includes.length-6} more‚Ä¶</div>}
               </div>
               <div style={{display:"flex",gap:6,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
-                <Btn onClick={()=>startEdit(pk)} style={{fontSize:12,flex:1}}>✏️ Edit</Btn>
+                <Btn onClick={()=>startEdit(pk)} style={{fontSize:12,flex:1}}>‚úèÔ∏è Edit</Btn>
                 <Btn variant="ghost" onClick={()=>delPkg(pk)} style={{fontSize:12,color:C.coral}}>Delete</Btn>
               </div>
             </Card>
@@ -1289,7 +1450,7 @@ function AddonsEditor({addons,onSaveAddon,onDeleteAddon}){
             <span style={{fontSize:13,fontWeight:600}}>{a.name}</span>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <span style={{fontSize:13,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{a.price}</span>
-              <button onClick={()=>del(a)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>✕</button>
+              <button onClick={()=>del(a)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>‚úï</button>
             </div>
           </div>
         ))}
@@ -1304,7 +1465,7 @@ function AddonsEditor({addons,onSaveAddon,onDeleteAddon}){
   );
 }
 
-// ── GET IN TOUCH (public enquiry page — wired to /api/send-email + CRM) ───
+// ‚îÄ‚îÄ GET IN TOUCH (public enquiry page ‚Äî wired to /api/send-email + CRM) ‚îÄ‚îÄ‚îÄ
 const OCCASIONS = ["Birthday Party","Wedding","Corporate","Engagement","Other"];
 
 function GetInTouch({biz, onSubmitLead, embedded=false}) {
@@ -1346,7 +1507,7 @@ ${form.message}`;
       status: "Inquiry",
       eventDate: form.eventDate,
       venue: form.location,
-      notes: `Website enquiry · ${form.people} guests · Interested in: ${form.service}. "${form.message}"`,
+      notes: `Website enquiry ¬∑ ${form.people} guests ¬∑ Interested in: ${form.service}. "${form.message}"`,
       value: matched ? matched.price : 0,
       paid: 0,
       abn: "",
@@ -1357,7 +1518,7 @@ ${form.message}`;
       const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: biz.email, subject: `New ${form.occasion} enquiry — ${form.name}`, text: buildText(), replyTo: form.email }),
+        body: JSON.stringify({ to: biz.email, subject: `New ${form.occasion} enquiry ‚Äî ${form.name}`, text: buildText(), replyTo: form.email }),
       });
       if (res.status === 404) {
         onSubmitLead && onSubmitLead(lead);   // no backend (e.g. preview): still capture the lead so the flow is visible
@@ -1400,9 +1561,9 @@ ${form.message}`;
 
         {status==="sent" ? (
           <Card style={{textAlign:"center",padding:"38px 22px"}}>
-            <div style={{fontSize:42,marginBottom:10}}>🎉</div>
+            <div style={{fontSize:42,marginBottom:10}}>üéâ</div>
             <h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:28,letterSpacing:1,color:C.green}}>Enquiry sent!</h3>
-            <p style={{color:C.muted,fontSize:14,marginTop:8,lineHeight:1.5}}>Thanks — we've got your details and will be in touch shortly.</p>
+            <p style={{color:C.muted,fontSize:14,marginTop:8,lineHeight:1.5}}>Thanks ‚Äî we've got your details and will be in touch shortly.</p>
             <div style={{marginTop:18}}><Btn variant="outline" onClick={() => setStatus("idle")}>Send another</Btn></div>
           </Card>
         ) : (
@@ -1417,7 +1578,7 @@ ${form.message}`;
             <div style={fieldStyle}>
               <label style={lblStyle}>Occasion *</label>
               <select value={form.occasion} onChange={e => set("occasion",e.target.value)}>
-                <option value="">Select an occasion…</option>
+                <option value="">Select an occasion‚Ä¶</option>
                 {OCCASIONS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
@@ -1425,21 +1586,21 @@ ${form.message}`;
             <div style={fieldStyle}>
               <label style={lblStyle}>Service / Package *</label>
               <select value={form.service} onChange={e => set("service",e.target.value)}>
-                <option value="">Select a package…</option>
-                {PACKAGES.map(p => <option key={p.id} value={`${p.name} — ${fmt$(p.price)}`}>{p.name} — {fmt$(p.price)}{p.tag ? ` · ${p.tag}` : ""}</option>)}
-                <option value="Not sure yet — please recommend">Not sure yet — please recommend</option>
+                <option value="">Select a package‚Ä¶</option>
+                {PACKAGES.map(p => <option key={p.id} value={`${p.name} ‚Äî ${fmt$(p.price)}`}>{p.name} ‚Äî {fmt$(p.price)}{p.tag ? ` ¬∑ ${p.tag}` : ""}</option>)}
+                <option value="Not sure yet ‚Äî please recommend">Not sure yet ‚Äî please recommend</option>
               </select>
             </div>
 
             <div style={fieldStyle}>
               <label style={lblStyle}>Message *</label>
-              <textarea rows={5} value={form.message} placeholder="Tell us about your event…" onChange={e => set("message",e.target.value)} style={{resize:"vertical"}} />
+              <textarea rows={5} value={form.message} placeholder="Tell us about your event‚Ä¶" onChange={e => set("message",e.target.value)} style={{resize:"vertical"}} />
             </div>
 
             {status==="error" && <div style={{background:C.coral+"22",color:C.coral,border:`1px solid ${C.coral}55`,borderRadius:8,padding:"10px 12px",fontSize:13,marginBottom:14,lineHeight:1.5}}>{errorMsg}</div>}
 
             <Btn onClick={submit} disabled={status==="sending"} style={{width:"100%",padding:"13px 0",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              {status==="sending" ? <><span style={{width:14,height:14,border:"2px solid #000",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.7s linear infinite",display:"inline-block"}} /> Sending…</> : "Send Enquiry"}
+              {status==="sending" ? <><span style={{width:14,height:14,border:"2px solid #000",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.7s linear infinite",display:"inline-block"}} /> Sending‚Ä¶</> : "Send Enquiry"}
             </Btn>
 
             <div style={{display:"flex",justifyContent:"center",gap:18,marginTop:18}}>
@@ -1455,7 +1616,7 @@ ${form.message}`;
   );
 }
 
-// ── PUBLIC SITE SHELL ────────────────────────────────────────────
+// ‚îÄ‚îÄ PUBLIC SITE SHELL ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function PublicShell({route, navigate, children}) {
   const items=[["home","Home"],["services","Our Services"],["gallery","Gallery"],["contact","Get in touch"]];
   return (
@@ -1472,7 +1633,7 @@ function PublicShell({route, navigate, children}) {
       <main style={{flex:1}}>{children}</main>
       <footer style={{borderTop:`1px solid ${C.border}`,background:C.surface,padding:"26px 16px",marginTop:30}}>
         <div style={{maxWidth:1000,margin:"0 auto",display:"flex",flexWrap:"wrap",gap:18,justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}><LogoW height={26}/><span style={{color:C.muted,fontSize:12}}>Melbourne, VIC · {DEFAULT_BIZ.phone}</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}><LogoW height={26}/><span style={{color:C.muted,fontSize:12}}>Melbourne, VIC ¬∑ {DEFAULT_BIZ.phone}</span></div>
           <div style={{display:"flex",gap:16}}>
             <a href="https://www.facebook.com/DJC.RAMOFFICIAL" target="_blank" rel="noopener noreferrer" style={{color:C.muted,textDecoration:"none",fontSize:13}}>Facebook</a>
             <a href="https://www.instagram.com/djc_ram" target="_blank" rel="noopener noreferrer" style={{color:C.muted,textDecoration:"none",fontSize:13}}>Instagram</a>
@@ -1480,7 +1641,7 @@ function PublicShell({route, navigate, children}) {
           </div>
         </div>
         <div style={{maxWidth:1000,margin:"14px auto 0",display:"flex",justifyContent:"space-between",borderTop:`1px solid ${C.border}`,paddingTop:12,flexWrap:"wrap",gap:8}}>
-          <span style={{color:C.dim,fontSize:11}}>© {new Date().getFullYear()} C-RAM Entertainment</span>
+          <span style={{color:C.dim,fontSize:11}}>¬© {new Date().getFullYear()} C-RAM Entertainment</span>
           <button onClick={()=>navigate("admin")} style={{background:"none",border:"none",color:C.dim,fontSize:11,textDecoration:"underline"}}>Business Hub</button>
         </div>
       </footer>
@@ -1488,18 +1649,18 @@ function PublicShell({route, navigate, children}) {
   );
 }
 
-// ── HOME ─────────────────────────────────────────────────────────
+// ‚îÄ‚îÄ HOME ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Home({navigate}) {
   const HERO_VID="https://c-rament.com.au/wp-content/uploads/2025/04/master-24-1.mp4";
   const ABOUT_IMG="https://c-rament.com.au/wp-content/uploads/2025/04/20190816_174758-1024x498.jpg";
   const services=[
     {t:"Wedding DJ Services",d:"Make your special day unforgettable. We tailor the music to your style and keep guests dancing all night."},
-    {t:"Corporate Events",d:"Add class and excitement to your event — from background music to a full dance party."},
+    {t:"Corporate Events",d:"Add class and excitement to your event ‚Äî from background music to a full dance party."},
     {t:"Birthday Parties",d:"Celebrate with an epic party. We set the mood and make sure everyone has a great time."},
   ];
   const values=[
-    {t:"Commitment to Quality",d:"We believe in the power of fun, enjoyable music to bring people together — creating memorable experiences that resonate."},
-    {t:"How We Can Help",d:"A wide range of services including event planning, artist booking and venue management — from intimate gatherings to large-scale events."},
+    {t:"Commitment to Quality",d:"We believe in the power of fun, enjoyable music to bring people together ‚Äî creating memorable experiences that resonate."},
+    {t:"How We Can Help",d:"A wide range of services including event planning, artist booking and venue management ‚Äî from intimate gatherings to large-scale events."},
     {t:"Personalised Collaboration",d:"From the initial consultation to the final track of the night, we work closely with you so every detail is perfectly in tune."},
   ];
   return (
@@ -1568,9 +1729,9 @@ function Home({navigate}) {
                 <h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,letterSpacing:1,color:p.accentColor===C.muted?C.text:p.accentColor,marginTop:4}}>{p.name}</h3>
                 <p style={{color:C.muted,fontSize:12.5,minHeight:34,marginTop:2}}>{p.tagline}</p>
                 <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:34,color:C.text,margin:"8px 0 2px"}}>{fmt$(p.price)}</div>
-                <div style={{color:C.dim,fontSize:11,marginBottom:12}}>inc GST · {p.hours}</div>
+                <div style={{color:C.dim,fontSize:11,marginBottom:12}}>inc GST ¬∑ {p.hours}</div>
                 <ul style={{listStyle:"none",margin:0,padding:0,display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
-                  {p.includes.slice(0,5).map(inc=><li key={inc.name} style={{color:C.muted,fontSize:13,display:"flex",gap:8}}><span style={{color:C.green}}>✓</span>{inc.name}</li>)}
+                  {p.includes.slice(0,5).map(inc=><li key={inc.name} style={{color:C.muted,fontSize:13,display:"flex",gap:8}}><span style={{color:C.green}}>‚úì</span>{inc.name}</li>)}
                   {p.includes.length>5&&<li style={{color:C.dim,fontSize:12,marginLeft:18}}>+ {p.includes.length-5} more</li>}
                 </ul>
                 <Btn onClick={()=>navigate("contact")} variant={p.tag==="MOST POPULAR"?"primary":"outline"} style={{width:"100%"}}>{p.cta}</Btn>
@@ -1591,7 +1752,7 @@ function Home({navigate}) {
   );
 }
 
-// ── SERVICES ─────────────────────────────────────────────────────
+// ‚îÄ‚îÄ SERVICES ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Services({navigate}) {
   const svc=[
     {t:"Wedding DJ Services",d:"Make your special day unforgettable with professional wedding DJ services. We tailor the music to fit your style and keep your guests dancing all night long.",v:"https://c-rament.com.au/wp-content/uploads/2025/04/20220319_230013.mp4"},
@@ -1628,9 +1789,9 @@ function Services({navigate}) {
             <h3 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:1,color:p.accentColor===C.muted?C.text:p.accentColor,marginTop:4}}>{p.name}</h3>
             <p style={{color:C.muted,fontSize:12.5,minHeight:34,marginTop:2}}>{p.tagline}</p>
             <div style={{fontFamily:"Bebas Neue,sans-serif",fontSize:38,color:C.text,margin:"8px 0 2px"}}>{fmt$(p.price)}</div>
-            <div style={{color:C.dim,fontSize:11,marginBottom:14}}>inc GST · {p.hours}</div>
+            <div style={{color:C.dim,fontSize:11,marginBottom:14}}>inc GST ¬∑ {p.hours}</div>
             <ul style={{listStyle:"none",margin:0,padding:0,display:"flex",flexDirection:"column",gap:7,marginBottom:16}}>
-              {p.includes.map(inc=><li key={inc.name} style={{color:C.muted,fontSize:13,display:"flex",gap:8}}><span style={{color:C.green}}>✓</span><span><b style={{color:C.text,fontWeight:600}}>{inc.name}</b> — {inc.detail}</span></li>)}
+              {p.includes.map(inc=><li key={inc.name} style={{color:C.muted,fontSize:13,display:"flex",gap:8}}><span style={{color:C.green}}>‚úì</span><span><b style={{color:C.text,fontWeight:600}}>{inc.name}</b> ‚Äî {inc.detail}</span></li>)}
             </ul>
             <Btn onClick={()=>navigate("contact")} variant={p.tag==="MOST POPULAR"?"primary":"outline"} style={{width:"100%"}}>{p.cta}</Btn>
           </Card>
@@ -1646,7 +1807,7 @@ function Services({navigate}) {
   );
 }
 
-// ── GALLERY ──────────────────────────────────────────────────────
+// ‚îÄ‚îÄ GALLERY ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Gallery({navigate}) {
   const vids=[
     "https://c-rament.com.au/wp-content/uploads/2025/04/use-this-one.mp4",
@@ -1674,7 +1835,7 @@ function Gallery({navigate}) {
   );
 }
 
-// ── LOGIN (real email + password via Supabase Auth) ──────────────
+// ‚îÄ‚îÄ LOGIN (real email + password via Supabase Auth) ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1695,11 +1856,11 @@ function Login() {
       <div style={{marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:12}}><EQBars/><LogoW height={40}/></div>
       <Card style={{maxWidth:360,width:"100%",textAlign:"center",padding:"32px 24px"}}>
         <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:1,color:C.text}}>Business Hub</h2>
-        <p style={{color:C.muted,fontSize:13,marginTop:4,marginBottom:18}}>Private — sign in to continue.</p>
+        <p style={{color:C.muted,fontSize:13,marginTop:4,marginBottom:18}}>Private ‚Äî sign in to continue.</p>
         <input type="email" value={email} placeholder="Email" autoComplete="username" onChange={e=>{setEmail(e.target.value);setErr("");}} style={{marginBottom:10,textAlign:"center"}} />
         <input type="password" value={password} placeholder="Password" autoComplete="current-password" onChange={e=>{setPassword(e.target.value);setErr("");}} onKeyDown={e=>{if(e.key==="Enter")signIn();}} style={{marginBottom:err?8:14,textAlign:"center"}} />
         {err && <div style={{color:C.coral,fontSize:12.5,marginBottom:12}}>{err}</div>}
-        <Btn onClick={signIn} disabled={busy} style={{width:"100%"}}>{busy?"Signing in…":"Sign In"}</Btn>
+        <Btn onClick={signIn} disabled={busy} style={{width:"100%"}}>{busy?"Signing in‚Ä¶":"Sign In"}</Btn>
       </Card>
     </div>
   );
@@ -1788,7 +1949,7 @@ export default function App(){
 
   // ---- Render ----
   if(session===undefined){
-    return <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",color:C.muted,fontFamily:"Inter,sans-serif"}}><style>{css}</style>Loading…</div>;
+    return <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",color:C.muted,fontFamily:"Inter,sans-serif"}}><style>{css}</style>Loading‚Ä¶</div>;
   }
   if(!session) return <Login/>;
 
@@ -1803,7 +1964,7 @@ export default function App(){
               <span>{n.icon}</span><span style={{marginLeft:3}}>{n.label}</span>
             </button>
           ))}
-          <button onClick={async()=>{setExportStatus("Preparing…");try{const r=await exportAllToExcel(clients,invoices,djs,biz);setExportStatus(r.format==="csv"?"Saved as CSV ✓":"Saved ✓");}catch(e){setExportStatus("Export failed");}setTimeout(()=>setExportStatus(""),4000);}} style={{background:"transparent",color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:600}}>⬇ Export Excel</button>
+          <button onClick={async()=>{setExportStatus("Preparing‚Ä¶");try{const r=await exportAllToExcel(clients,invoices,djs,biz);setExportStatus(r.format==="csv"?"Saved as CSV ‚úì":"Saved ‚úì");}catch(e){setExportStatus("Export failed");}setTimeout(()=>setExportStatus(""),4000);}} style={{background:"transparent",color:C.gold,border:`1px solid ${C.gold}55`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:600}}>‚¨á Export Excel</button>
           {exportStatus&&<span style={{fontSize:11,color:C.muted,alignSelf:"center",marginLeft:2}}>{exportStatus}</span>}
           <button onClick={logout} style={{background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:600}}>Log out</button>
         </nav>
@@ -1811,15 +1972,16 @@ export default function App(){
       <main style={{flex:1,padding:"22px 14px",maxWidth:1100,margin:"0 auto",width:"100%"}}>
         {dataError&&<div style={{background:C.coral+"18",border:`1px solid ${C.coral}55`,borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,color:C.coral}}>{dataError}</div>}
         {loading?(
-          <div style={{textAlign:"center",color:C.muted,padding:"60px 0"}}>Loading your data…</div>
+          <div style={{textAlign:"center",color:C.muted,padding:"60px 0"}}>Loading your data‚Ä¶</div>
         ):(
           <>
             {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} djs={djs} setTab={setTab}/>}
             {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab}/>}
             {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
             {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj}/>}
-            {tab==="content"&&<Content/>}
             {tab==="packages"&&<Packages packages={packages} addons={addons} onSavePackage={onSavePackage} onDeletePackage={onDeletePackage} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>}
+            {tab==="calendar"&&<CalendarTab biz={biz}/>}
+            {tab==="specials"&&<Specials clients={clients} biz={biz}/>}
             {tab==="settings"&&<Settings biz={biz} onSaveBiz={onSaveBiz}/>}
             {tab==="getintouch"&&<GetInTouch biz={biz} onSubmitLead={onSubmitLead} embedded={true}/>}
           </>
@@ -1827,7 +1989,7 @@ export default function App(){
       </main>
       <footer style={{borderTop:`1px solid ${C.border}`,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <LogoW height={20}/>
-        <span style={{fontSize:11,color:C.dim}}>C-RAM Entertainment · Business Hub</span>
+        <span style={{fontSize:11,color:C.dim}}>C-RAM Entertainment ¬∑ Business Hub</span>
       </footer>
     </div>
   );
