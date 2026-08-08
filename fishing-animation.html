@@ -1,0 +1,471 @@
+<title>Chief Fryom Dogman Goes Fishing</title>
+<style>
+  :root{
+    --paper:#f5f0e3;
+    --paper-shade:#e9e1cc;
+    --ink:#3a2f28;
+    --marker-blue:#2f6fd6;
+    --marker-blue-dk:#1f4f9e;
+    --brown:#8a4a2a;
+    --brown-dk:#6d3820;
+    --yellow:#c9c024;
+    --hair:#7a4a2c;
+    --skin:#9a5a34;
+    --shoe:#7d8790;
+    --lake:#2a9db5;
+    --lake-dk:#166b83;
+    --lake-lt:#57c4d8;
+    --sky-top:#bfe6f2;
+    --sky-bot:#eaf6d9;
+    --sun:#f4d35e;
+    --magenta:#c0208f;
+    --frame-bg:#d8cfae;
+  }
+  :root:not([data-theme="light"]){
+    /* dark host: only the page frame around the scene goes dusky.
+       the drawing itself keeps its bright paper world. */
+    @media (prefers-color-scheme: dark){
+      --frame-bg:#1c1f26;
+    }
+  }
+  :root[data-theme="dark"]{ --frame-bg:#1c1f26; }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:var(--frame-bg);
+    color:var(--ink);
+    font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px;
+  }
+
+  .card{
+    width:min(960px,100%);
+    background:
+      repeating-linear-gradient(90deg, transparent 0 39px, rgba(0,0,0,.03) 39px 40px),
+      var(--paper);
+    border-radius:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.06);
+    padding:18px 18px 22px;
+    position:relative;
+  }
+  .card::before{
+    /* torn-tape corners, like a taped-up drawing */
+    content:"";
+    position:absolute; top:-9px; left:34px; width:78px; height:22px;
+    background:rgba(226,210,120,.55);
+    transform:rotate(-4deg);
+    box-shadow:0 1px 2px rgba(0,0,0,.12);
+  }
+  .card::after{
+    content:"";
+    position:absolute; top:-9px; right:34px; width:78px; height:22px;
+    background:rgba(226,210,120,.55);
+    transform:rotate(3deg);
+    box-shadow:0 1px 2px rgba(0,0,0,.12);
+  }
+
+  .titlebar{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:12px; flex-wrap:wrap; margin:2px 6px 12px;
+  }
+  h1{
+    font-family:"Comic Sans MS","Marker Felt","Chalkboard SE",cursive;
+    color:var(--magenta);
+    font-size:clamp(22px,4.4vw,40px);
+    margin:0; line-height:.98; letter-spacing:.5px;
+    text-transform:uppercase;
+    text-shadow:1.5px 1.5px 0 rgba(0,0,0,.10);
+    text-wrap:balance;
+  }
+  .byline{
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--brown-dk); opacity:.8; white-space:nowrap;
+  }
+
+  .stage-wrap{
+    position:relative; border-radius:10px; overflow:hidden;
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,.10);
+  }
+  svg.stage{ display:block; width:100%; height:auto; }
+
+  .status{
+    position:absolute; left:50%; top:14px; transform:translateX(-50%);
+    font-family:"Comic Sans MS","Marker Felt",cursive;
+    font-size:clamp(15px,2.6vw,24px);
+    color:#fff; -webkit-text-stroke:1px rgba(0,0,0,.35);
+    text-shadow:2px 2px 0 rgba(0,0,0,.18);
+    white-space:nowrap; pointer-events:none;
+  }
+  .status b{ animation:statusCycle 12s linear infinite; display:inline-block; }
+  @keyframes statusCycle{
+    0%,10%   { content:""; }
+  }
+
+  .footnote{
+    margin:12px 8px 2px; font-size:12.5px; color:var(--brown-dk);
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .footnote .replay{
+    background:none; border:1.5px dashed var(--brown); color:var(--brown-dk);
+    font:inherit; font-size:12px; padding:3px 10px; border-radius:20px;
+    cursor:pointer;
+  }
+  .footnote .replay:hover{ background:rgba(138,74,42,.08); }
+  .footnote .replay:focus-visible{ outline:2px solid var(--magenta); outline-offset:2px; }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ animation:none !important; }
+  }
+</style>
+
+<div class="card">
+  <div class="titlebar">
+    <h1>Chief Fryom Dogman<br>Goes Fishing</h1>
+    <span class="byline">A Marker Drawing, Animated</span>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="status" aria-hidden="true"><b id="statusText">Ready to fish…</b></div>
+
+    <svg class="stage" viewBox="0 0 800 460" role="img"
+         aria-label="Chief Fryom Dogman casts a fishing line, a fish bites, and he reels it in and cheers.">
+      <defs>
+        <!-- hand-drawn marker wobble -->
+        <filter id="wobble" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="7" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="4.2"
+             xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="wobble2" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="21" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3"
+             xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--sky-top)"/>
+          <stop offset="1" stop-color="var(--sky-bot)"/>
+        </linearGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--lake-lt)"/>
+          <stop offset="1" stop-color="var(--lake-dk)"/>
+        </linearGradient>
+
+        <!-- the fish, reused -->
+        <g id="fishShape">
+          <path d="M0,0 C14,-13 40,-13 56,0 C40,13 14,13 0,0 Z" fill="#e88b2a" stroke="var(--ink)" stroke-width="2.4"/>
+          <path d="M56,0 L74,-13 L74,13 Z" fill="#e88b2a" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M24,-9 L34,-19 L40,-7" fill="#f0a94a" stroke="var(--ink)" stroke-width="2"/>
+          <circle cx="14" cy="-2" r="3.4" fill="#fff" stroke="var(--ink)" stroke-width="1.6"/>
+          <circle cx="13" cy="-2" r="1.6" fill="var(--ink)"/>
+          <path d="M30,2 q9,5 20,2" fill="none" stroke="var(--brown-dk)" stroke-width="1.6" opacity=".6"/>
+        </g>
+      </defs>
+
+      <!-- ===== SKY & SUN ===== -->
+      <rect x="0" y="0" width="800" height="300" fill="url(#sky)"/>
+      <g filter="url(#wobble)">
+        <circle cx="678" cy="74" r="40" fill="var(--sun)" stroke="#e0b83e" stroke-width="3"/>
+        <g stroke="var(--sun)" stroke-width="6" stroke-linecap="round">
+          <line x1="678" y1="12" x2="678" y2="-4"/>
+          <line x1="740" y1="74" x2="760" y2="74"/>
+          <line x1="722" y1="30" x2="736" y2="16"/>
+          <line x1="722" y1="118" x2="736" y2="132"/>
+        </g>
+      </g>
+      <!-- clouds -->
+      <g fill="#ffffff" opacity=".85" filter="url(#wobble2)">
+        <g class="cloud" style="--cd:0s">
+          <ellipse cx="150" cy="70" rx="42" ry="20"/>
+          <ellipse cx="188" cy="64" rx="30" ry="18"/>
+          <ellipse cx="120" cy="66" rx="26" ry="15"/>
+        </g>
+        <g class="cloud" style="--cd:-9s">
+          <ellipse cx="420" cy="46" rx="34" ry="15"/>
+          <ellipse cx="452" cy="42" rx="24" ry="13"/>
+        </g>
+      </g>
+
+      <!-- ===== WATER ===== -->
+      <rect x="0" y="300" width="800" height="160" fill="url(#water)"/>
+      <g stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity=".45" filter="url(#wobble2)">
+        <path d="M40,332 q18,-7 36,0 t36,0"/>
+        <path d="M300,360 q18,-7 36,0 t36,0"/>
+        <path d="M560,338 q18,-7 36,0 t36,0"/>
+        <path d="M180,398 q18,-7 36,0 t36,0"/>
+        <path d="M470,410 q18,-7 36,0 t36,0"/>
+        <path d="M650,388 q18,-7 36,0 t36,0"/>
+      </g>
+
+      <!-- ===== GRASSY BANK (left) ===== -->
+      <g filter="url(#wobble)">
+        <path d="M0,300 L0,460 L235,460 L235,318 C180,300 90,296 0,300 Z"
+              fill="#7bbb3f" stroke="var(--brown-dk)" stroke-width="0" />
+        <path d="M0,300 C90,296 180,300 235,318" fill="none" stroke="#5f9a2e" stroke-width="4"/>
+        <g stroke="#4f8a24" stroke-width="3" stroke-linecap="round">
+          <path d="M28,312 l-4,-14"/><path d="M44,314 l3,-14"/>
+          <path d="M120,306 l-3,-14"/><path d="M138,307 l4,-13"/>
+          <path d="M198,312 l-3,-13"/>
+        </g>
+      </g>
+
+      <!-- deep-water fish, cruises in then gets hooked -->
+      <g id="fish" transform="translate(760,392) scale(-1,1)">
+        <use href="#fishShape"/>
+      </g>
+
+      <!-- ===== FISHING LINE ===== (drawn separately so it can retract) -->
+      <path id="line" d="M258,150 C360,150 470,250 505,300"
+            fill="none" stroke="var(--ink)" stroke-width="1.8" opacity=".85"/>
+      <!-- bobber -->
+      <g id="bobber" transform="translate(505,300)">
+        <circle r="8" cy="0" fill="#e23b3b" stroke="var(--ink)" stroke-width="2"/>
+        <path d="M-8,0 h16" stroke="var(--ink)" stroke-width="2"/>
+        <circle r="8" cy="0" fill="none"/>
+        <path d="M0,-8 v-10" stroke="var(--ink)" stroke-width="2"/>
+      </g>
+      <!-- caught fish rides up on the line -->
+      <g id="caughtFish" transform="translate(505,300)" opacity="0">
+        <g transform="translate(-30,6) scale(0.85)"><use href="#fishShape"/></g>
+      </g>
+      <!-- splash where bobber lands -->
+      <g id="splash" transform="translate(505,300)" opacity="0"
+         stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M-2,-6 v-14"/><path d="M-16,-2 l-12,-8"/><path d="M12,-2 l12,-8"/>
+        <path d="M-22,4 l-16,2"/><path d="M22,4 l16,2"/>
+      </g>
+
+      <!-- ===== CHIEF FRYOM DOGMAN ===== -->
+      <g id="chief" filter="url(#wobble)" transform="translate(120,150)">
+        <!-- legs -->
+        <g stroke="var(--brown)" stroke-width="13" stroke-linecap="round" fill="none">
+          <path d="M4,150 C-6,180 -14,206 -20,228"/>
+          <path d="M34,150 C44,180 52,206 58,228"/>
+        </g>
+        <!-- shoes -->
+        <ellipse cx="-26" cy="236" rx="20" ry="12" fill="var(--shoe)" stroke="var(--ink)" stroke-width="2.4"/>
+        <ellipse cx="64"  cy="236" rx="20" ry="12" fill="var(--shoe)" stroke="var(--ink)" stroke-width="2.4"/>
+
+        <!-- back arm (holds nothing, swings for balance) -->
+        <path id="backArm" d="M6,64 C-24,74 -44,92 -58,112"
+              stroke="var(--brown)" stroke-width="13" stroke-linecap="round" fill="none"/>
+        <ellipse cx="-60" cy="116" rx="11" ry="9" fill="var(--skin)" stroke="var(--ink)" stroke-width="2"/>
+
+        <!-- shirt / uniform -->
+        <path d="M-12,52 C6,42 30,42 50,52 L58,150 C34,158 4,158 -20,150 Z"
+              fill="var(--marker-blue)" stroke="var(--marker-blue-dk)" stroke-width="3"/>
+        <!-- yellow chevron on chest -->
+        <path d="M19,58 L-2,66 L19,120 L40,66 Z" fill="var(--yellow)" stroke="#a89b1c" stroke-width="2"/>
+        <!-- collar -->
+        <path d="M6,50 L19,64 L32,50" fill="none" stroke="var(--marker-blue-dk)" stroke-width="3"/>
+
+        <!-- head -->
+        <circle cx="19" cy="26" r="24" fill="var(--skin)" stroke="var(--ink)" stroke-width="2.6"/>
+        <!-- scribbly hair -->
+        <path d="M-3,16 q4,-22 22,-22 q18,0 22,22 q-6,-10 -22,-10 q-16,0 -22,10 Z"
+              fill="var(--hair)" stroke="var(--brown-dk)" stroke-width="2"/>
+        <!-- blue cap -->
+        <path d="M-2,8 q21,-20 42,0 q-21,-9 -42,0 Z" fill="var(--marker-blue)" stroke="var(--marker-blue-dk)" stroke-width="2.4"/>
+        <path d="M-6,9 q4,-3 10,-2" fill="none" stroke="var(--marker-blue-dk)" stroke-width="3"/>
+        <circle cx="19" cy="2" r="2.6" fill="var(--yellow)" stroke="var(--ink)" stroke-width="1"/>
+        <!-- face -->
+        <circle cx="11" cy="24" r="2.6" fill="var(--ink)"/>
+        <circle cx="27" cy="24" r="2.6" fill="var(--ink)"/>
+        <path id="mouth" d="M10,36 q9,7 18,0" fill="none" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"/>
+
+        <!-- CASTING ARM + ROD (rotates around the shoulder) -->
+        <g id="castArm" transform="rotate(0 44 60)">
+          <path d="M44,60 C74,64 96,74 112,86"
+                stroke="var(--brown)" stroke-width="13" stroke-linecap="round" fill="none"/>
+          <ellipse cx="116" cy="88" rx="11" ry="9" fill="var(--skin)" stroke="var(--ink)" stroke-width="2"/>
+          <!-- fishing rod -->
+          <line x1="112" y1="94" x2="150" y2="6" stroke="var(--brown-dk)" stroke-width="5" stroke-linecap="round"/>
+          <line x1="132" y1="50" x2="140" y2="54" stroke="var(--ink)" stroke-width="3"/>
+          <circle cx="150" cy="6" r="3" fill="var(--ink)"/>
+        </g>
+
+        <!-- name tag under the drawing, echoing the original caption -->
+        <text x="19" y="278" text-anchor="middle"
+              font-family="'Comic Sans MS','Marker Felt',cursive"
+              font-size="17" fill="var(--magenta)"
+              transform="rotate(-2 19 278)">CHIEF FRYOM DOGMAN</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="footnote">
+    <span>Recreated from the original marker drawing — blue uniform, yellow chevron, and all.</span>
+    <button class="replay" id="replayBtn" type="button">Replay the cast ↻</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  // ---- the fishing rod tip position, in chief-local coords, at rest ----
+  // chief group is translate(120,150); rod tip is roughly (150,6) local -> (270,156) stage.
+  // We animate the LINE, BOBBER, FISH, and CHIEF's arm/mouth on one shared timeline.
+
+  var CYCLE = 12000; // ms
+
+  var line      = document.getElementById("line");
+  var bobber    = document.getElementById("bobber");
+  var splash    = document.getElementById("splash");
+  var fish      = document.getElementById("fish");
+  var caught    = document.getElementById("caughtFish");
+  var castArm   = document.getElementById("castArm");
+  var mouth     = document.getElementById("mouth");
+  var statusEl  = document.getElementById("statusText");
+
+  // rod-tip anchor on stage (approx, follows arm rotation lightly)
+  function rodTip(armAngle){
+    // pivot at chief-local (44,60) => stage (164,210). tip local (150,6).
+    var cx=164, cy=210, tx=270, ty=156;
+    var a = armAngle*Math.PI/180;
+    var dx=tx-cx, dy=ty-cy;
+    return {
+      x: cx + dx*Math.cos(a) - dy*Math.sin(a),
+      y: cy + dx*Math.sin(a) + dy*Math.cos(a)
+    };
+  }
+
+  // bobber resting spots
+  var CAST_X=560, CAST_Y=316;   // where it lands on the water
+  var HOLD_X=300, HOLD_Y=150;   // held near chief before cast
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function ease(t){ return t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+
+  function drawLine(tip, bx, by, sag){
+    var mx=(tip.x+bx)/2, my=(tip.y+by)/2 + (sag||0);
+    line.setAttribute("d","M"+tip.x+","+tip.y+" Q"+mx+","+my+" "+bx+","+by);
+  }
+
+  function setStatus(s){ if(statusEl.textContent!==s) statusEl.textContent=s; }
+
+  var startOffset = 0;
+  function frame(now){
+    var t = (((now - startOffset) % CYCLE) + CYCLE) % CYCLE / CYCLE; // 0..1
+    var arm=0, bx=HOLD_X, by=HOLD_Y, sag=10, showSplash=0, showCaught=0, mood="smile";
+    var fishX, fishY=392, fishFlip=-1, fishOpacity=1;
+
+    // Phase map over the cycle:
+    // 0.00-0.10 idle / ready
+    // 0.10-0.20 wind up (arm back)
+    // 0.20-0.30 cast forward, bobber flies out, splash
+    // 0.30-0.55 waiting, fish swims in
+    // 0.55-0.62 bite (bobber dunks)
+    // 0.62-0.75 reel up, fish rides line to chief
+    // 0.75-0.95 celebrate (fish held high)
+    // 0.95-1.00 reset
+
+    if(t<0.10){                                   // idle
+      setStatus("Ready to fish…");
+      arm=-6; bx=HOLD_X; by=HOLD_Y; fishX=780;
+    } else if(t<0.20){                            // wind up
+      setStatus("Winding up…");
+      var k=ease((t-0.10)/0.10);
+      arm=lerp(-6,-58,k);
+      var tip=rodTip(arm); bx=lerp(HOLD_X,tip.x-10,k); by=lerp(HOLD_Y,tip.y-6,k);
+      fishX=780;
+    } else if(t<0.30){                            // cast forward
+      setStatus("Casting out! 🎣");
+      var k2=ease((t-0.20)/0.10);
+      arm=lerp(-58,26,k2);
+      // bobber arcs to the water
+      bx=lerp(HOLD_X,CAST_X,k2);
+      by=lerp(HOLD_Y,CAST_Y,k2) - Math.sin(k2*Math.PI)*120; // arc up then down
+      sag=lerp(-30,14,k2);
+      if(k2>0.9) showSplash=(k2-0.9)/0.1;
+      fishX=780;
+    } else if(t<0.55){                            // waiting, fish approaches
+      setStatus("Waiting for a bite…");
+      arm=18;
+      bx=CAST_X; by=CAST_Y + Math.sin(now/380)*3; // gentle float
+      var kf=(t-0.30)/0.25;
+      fishX=lerp(790,CAST_X+70,ease(kf));
+      fishY=lerp(430,392,ease(kf));
+    } else if(t<0.62){                            // bite
+      setStatus("A bite!! 🐟");
+      arm=18;
+      var kb=(t-0.55)/0.07;
+      bx=CAST_X; by=CAST_Y + Math.min(kb*40,26) + Math.sin(now/60)*3; // dunk + jitter
+      fishX=CAST_X+18; fishY=380;
+      mood="o";
+    } else if(t<0.75){                            // reel & lift
+      setStatus("Reel it in! 🎣");
+      var kr=ease((t-0.62)/0.13);
+      arm=lerp(18,-40,kr);                        // yank up
+      var tip=rodTip(arm);
+      bx=lerp(CAST_X,tip.x-6,kr);
+      by=lerp(CAST_Y,tip.y-4,kr);
+      sag=lerp(14,-20,kr);
+      showCaught=1;
+      fishOpacity=0;                              // deep fish now becomes the caught one
+      fishX=CAST_X;
+    } else if(t<0.95){                            // celebrate
+      setStatus("Chief caught a fish! 🎉");
+      var kc=(t-0.75)/0.20;
+      arm=-40 + Math.sin(now/120)*4;              // triumphant wobble
+      var tip=rodTip(arm);
+      bx=tip.x-6; by=tip.y-4; sag=-20;
+      showCaught=1; fishOpacity=0; fishX=CAST_X;
+      mood="smile-big";
+    } else {                                      // reset
+      setStatus("Ready to fish…");
+      var ke=(t-0.95)/0.05;
+      arm=lerp(-40,-6,ke);
+      bx=lerp(rodTip(-40).x-6,HOLD_X,ke);
+      by=lerp(rodTip(-40).y-4,HOLD_Y,ke);
+      showCaught=1-ke; fishOpacity=0; fishX=CAST_X;
+    }
+
+    // apply
+    castArm.setAttribute("transform","rotate("+arm.toFixed(2)+" 44 60)");
+    var tip=rodTip(arm);
+    drawLine(tip,bx,by,sag);
+    bobber.setAttribute("transform","translate("+bx.toFixed(1)+","+by.toFixed(1)+")");
+    bobber.style.opacity = showCaught>0 ? String(1-showCaught) : "1";
+    caught.setAttribute("transform","translate("+bx.toFixed(1)+","+by.toFixed(1)+")");
+    caught.setAttribute("opacity", String(showCaught));
+    splash.setAttribute("transform","translate("+CAST_X+","+CAST_Y+")");
+    splash.setAttribute("opacity", showSplash?String(showSplash):"0");
+    fish.setAttribute("opacity", String(fishOpacity));
+    fish.setAttribute("transform","translate("+fishX.toFixed(1)+","+fishY.toFixed(1)+") scale("+fishFlip+",1)");
+
+    // mouth mood
+    if(mood==="o") mouth.setAttribute("d","M14,34 q5,8 10,0 q-5,-6 -10,0 Z");
+    else if(mood==="smile-big") mouth.setAttribute("d","M8,34 q11,11 22,0");
+    else mouth.setAttribute("d","M10,36 q9,7 18,0");
+
+    raf=requestAnimationFrame(frame);
+  }
+
+  var raf, start=null;
+  if(reduce){
+    // static "caught it" pose
+    setStatus("Chief caught a fish! 🎉");
+    castArm.setAttribute("transform","rotate(-40 44 60)");
+    var tip=rodTip(-40);
+    caught.setAttribute("transform","translate("+(tip.x-6)+","+(tip.y-4)+")");
+    caught.setAttribute("opacity","1");
+    bobber.style.opacity="0";
+    fish.setAttribute("opacity","0");
+    drawLine(tip,tip.x-6,tip.y-4,-20);
+  } else {
+    raf=requestAnimationFrame(frame);
+  }
+
+  document.getElementById("replayBtn").addEventListener("click",function(){
+    if(reduce) return;
+    startOffset = performance.now();   // jump back to the top of the cast
+  });
+})();
+</script>
