@@ -691,6 +691,111 @@ function Dashboard({clients,invoices,djs,setTab}){
 }
 
 // -- CRM -----------------------------------------------------------
+function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack}){
+  const [showCompose,setShowCompose]=useState(false);
+  const [subject,setSubject]=useState("");
+  const [body,setBody]=useState("");
+  const [aiPrompt,setAiPrompt]=useState("correct grammar and rephrase professionally");
+  const [aiLoading,setAiLoading]=useState(false);
+  const [sending,setSending]=useState(false);
+  const [sendStatus,setSendStatus]=useState(null);
+  const pct=c.value>0?Math.round((c.paid/c.value)*100):0;
+
+  async function aiImprove(){
+    if(!body.trim())return;
+    setAiLoading(true);
+    try{
+      const res=await fetch("/api/ai-improve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:body,instruction:aiPrompt})});
+      if(!res.ok)throw new Error("AI improve failed");
+      const d=await res.json();
+      setBody(d.improved||body);
+    }catch(e){alert("AI error: "+e.message);}
+    finally{setAiLoading(false);}
+  }
+
+  async function sendEmail(){
+    if(!body.trim()||!c.email)return;
+    setSending(true);setSendStatus(null);
+    try{
+      const res=await fetch("/api/gmail-reply",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({to:c.email,subject:subject||"From C-RAM Entertainment",body})});
+      if(!res.ok)throw new Error("Send failed");
+      setSendStatus("sent");setBody("");setSubject("");
+    }catch(e){setSendStatus("error: "+e.message);}
+    finally{setSending(false);}
+  }
+
+  return(
+    <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,flexWrap:"wrap"}}>
+        <Btn variant="ghost" onClick={onBack}>{"←"} Back</Btn>
+        <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,letterSpacing:1,color:C.gold}}>{c.name}</h2>
+        <Badge label={c.type} color={C.purple}/><Badge label={c.status} color={sCol(c.status)}/>
+        {c.source==="Gmail"&&<Badge label="Gmail" color={C.green}/>}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <Card>
+          <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Contact</h4>
+          {[["Phone",c.phone],["Email",c.email],["ABN",c.abn],["Venue",c.venue],["Event Date",fmtD(c.eventDate)]].map(([k,v])=>v?<div key={k} style={{fontSize:13,marginBottom:7}}><span style={{color:C.muted}}>{k}: </span><span>{v}</span></div>:null)}
+        </Card>
+        <Card>
+          <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Payment</h4>
+          <div style={{fontSize:28,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{fmt$(c.value)}</div>
+          <div style={{background:C.bg,borderRadius:6,height:8,margin:"10px 0 6px"}}><div style={{background:C.green,height:8,borderRadius:6,width:pct+"%",transition:"width 0.5s"}}/></div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}><span style={{color:C.green}}>Paid: {fmt$(c.paid)}</span><span style={{color:C.coral}}>Owing: {fmt$(c.value-c.paid)}</span></div>
+        </Card>
+      </div>
+      <Card style={{marginTop:12}}><h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Notes</h4><p style={{fontSize:13,lineHeight:1.7}}>{c.notes||"No notes."}</p></Card>
+      <div style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap"}}>
+        <Btn onClick={onEdit}>{"✏️"} Edit</Btn>
+        <Btn variant="green" onClick={onCreateInvoice}>{"🧾"} Create Invoice</Btn>
+        {c.email&&<Btn onClick={()=>{setShowCompose(v=>!v);setSendStatus(null);}} style={{background:showCompose?C.gold+"33":C.surface,border:`1px solid ${showCompose?C.gold:C.border}`,color:showCompose?C.gold:C.text}}>{"✉️"} Email Client</Btn>}
+        <Btn variant="danger" onClick={onDelete}>Delete</Btn>
+      </div>
+
+      {/* Compose panel */}
+      {showCompose&&(
+        <Card style={{marginTop:14,border:`1px solid ${C.gold}44`}}>
+          <h4 style={{fontSize:12,fontWeight:700,color:C.gold,textTransform:"uppercase",letterSpacing:0.5,marginBottom:12}}>✉️ Email to {c.name} — <span style={{color:C.muted,fontWeight:400}}>{c.email}</span></h4>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:11,fontWeight:600,color:C.muted,display:"block",marginBottom:4}}>Subject</label>
+            <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="e.g. Re: Your DJ enquiry" style={{fontSize:13}}/>
+          </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:11,fontWeight:600,color:C.muted,display:"block",marginBottom:4}}>Message</label>
+            <textarea value={body} onChange={e=>setBody(e.target.value)} rows={6} placeholder={`Hi ${(c.name||"").split(" ")[0]},\n\nThank you for your enquiry…`} style={{fontSize:13,lineHeight:1.6,resize:"vertical"}}/>
+          </div>
+          {/* AI assist */}
+          <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}>
+            <span style={{fontSize:12,color:C.muted,whiteSpace:"nowrap"}}>AI assist:</span>
+            <select value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)} style={{flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}>
+              <option value="correct grammar and rephrase professionally">Correct grammar & rephrase professionally</option>
+              <option value="make more friendly and warm">Make more friendly & warm</option>
+              <option value="make more formal and concise">Make more formal & concise</option>
+              <option value="expand with more detail">Expand with more detail</option>
+              <option value="shorten and tighten">Shorten & tighten</option>
+            </select>
+            <button onClick={aiImprove} disabled={aiLoading||!body.trim()}
+              style={{background:C.purple,color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",opacity:(!body.trim()||aiLoading)?0.5:1}}>
+              {aiLoading?"Improving…":"✨ Improve"}
+            </button>
+          </div>
+          {/* Send */}
+          <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+            <button onClick={sendEmail} disabled={sending||!body.trim()}
+              style={{background:C.gold,color:"#000",border:"none",borderRadius:8,padding:"10px 22px",fontWeight:700,fontSize:14,cursor:"pointer",opacity:(sending||!body.trim())?0.5:1}}>
+              {sending?"Sending…":"📤 Send Email"}
+            </button>
+            <button onClick={()=>setShowCompose(false)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:8,padding:"10px 16px",fontSize:13,cursor:"pointer"}}>Cancel</button>
+            {sendStatus==="sent"&&<span style={{color:C.green,fontSize:13,fontWeight:600}}>✓ Email sent to {c.email}</span>}
+            {sendStatus&&sendStatus.startsWith("error")&&<span style={{color:C.coral,fontSize:12}}>{sendStatus}</span>}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   const [view,setView]=useState("list");const [sel,setSel]=useState(null);const [filter,setFilter]=useState("All");
   const [busy,setBusy]=useState(false);
@@ -759,34 +864,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   if(view==="detail"&&sel){
     const c=clients.find(x=>x.id===sel.id)||sel;
     const pct=c.value>0?Math.round((c.paid/c.value)*100):0;
-    return(
-      <div style={{animation:"slideIn 0.3s ease",maxWidth:680}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,flexWrap:"wrap"}}>
-          <Btn variant="ghost" onClick={()=>{setView("list");setSel(null);}}>{"\u2190"} Back</Btn>
-          <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:24,letterSpacing:1,color:C.gold}}>{c.name}</h2>
-          <Badge label={c.type} color={C.purple}/><Badge label={c.status} color={sCol(c.status)}/>
-          {c.source==="Gmail"&&<Badge label="Gmail" color={C.green}/>}
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <Card>
-            <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Contact</h4>
-            {[["Phone",c.phone],["Email",c.email],["ABN",c.abn],["Venue",c.venue],["Event Date",fmtD(c.eventDate)]].map(([k,v])=>v?<div key={k} style={{fontSize:13,marginBottom:7}}><span style={{color:C.muted}}>{k}: </span><span>{v}</span></div>:null)}
-          </Card>
-          <Card>
-            <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Payment</h4>
-            <div style={{fontSize:28,fontFamily:"Bebas Neue,sans-serif",color:C.gold}}>{fmt$(c.value)}</div>
-            <div style={{background:C.bg,borderRadius:6,height:8,margin:"10px 0 6px"}}><div style={{background:C.green,height:8,borderRadius:6,width:pct+"%",transition:"width 0.5s"}}/></div>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}><span style={{color:C.green}}>Paid: {fmt$(c.paid)}</span><span style={{color:C.coral}}>Owing: {fmt$(c.value-c.paid)}</span></div>
-          </Card>
-        </div>
-        <Card style={{marginTop:12}}><h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Notes</h4><p style={{fontSize:13,lineHeight:1.7}}>{c.notes||"No notes."}</p></Card>
-        <div style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap"}}>
-          <Btn onClick={()=>openEdit(c)}>{"\u270F"}{"\uFE0F"} Edit</Btn>
-          <Btn variant="green" onClick={()=>createInvoice(c)}>{"\uD83E\uDDFE"} Create Invoice</Btn>
-          <Btn variant="danger" onClick={()=>del(c)}>Delete</Btn>
-        </div>
-      </div>
-    );
+    return <ClientDetail c={c} onEdit={()=>openEdit(c)} onCreateInvoice={()=>createInvoice(c)} onDelete={()=>del(c)} onBack={()=>{setView("list");setSel(null);}}/>;
   }
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
