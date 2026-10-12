@@ -619,7 +619,7 @@ function allFYs(clients,invoices){
 function invTotal(inv){const sub=inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0);return inv.includeGST!==false?sub*1.1:sub;}
 
 // -- DASHBOARD -----------------------------------------------------
-function Dashboard({clients,invoices,djs,setTab}){
+function Dashboard({clients,invoices,djs,setTab,onTabClick}){
   const [fy,setFy]=useState(currentFY());
   const years=allFYs(clients,invoices);
   const fyInvoices=invoices.filter(i=>getFY(i.date)===fy);
@@ -654,8 +654,8 @@ function Dashboard({clients,invoices,djs,setTab}){
         </div>
       )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-        {[{v:fmt$(paid),l:"Revenue Collected",col:C.green,tab:"invoices"},{v:fmt$(outstanding),l:"Outstanding",col:C.coral,tab:"invoices"},{v:fmt$(gstCollected),l:"GST Collected",col:C.gold,tab:"invoices"},{v:confirmed,l:"Confirmed Gigs",col:C.purple,tab:"crm"},{v:leads,l:"Active Leads",col:C.gold,tab:"crm"},{v:djs.length,l:"DJ Roster",col:C.gold,tab:"roster"}].map(k=>(
-          <div key={k.l} onClick={()=>setTab(k.tab)} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:16,textAlign:"center",cursor:"pointer"}}
+        {[{v:fmt$(paid),l:"Revenue Collected",col:C.green,tab:"invoices"},{v:fmt$(outstanding),l:"Outstanding",col:C.coral,tab:"invoices"},{v:fmt$(gstCollected),l:"GST Collected",col:C.gold,tab:"invoices"},{v:confirmed,l:"Confirmed Gigs",col:C.purple,tab:"crm",statusFilter:"Confirmed"},{v:leads,l:"Active Leads",col:C.gold,tab:"crm",statusFilter:"leads"},{v:djs.length,l:"DJ Roster",col:C.gold,tab:"roster"}].map(k=>(
+          <div key={k.l} onClick={()=>onTabClick?onTabClick(k.tab,k.statusFilter):setTab(k.tab)} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:16,textAlign:"center",cursor:"pointer"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor=k.col}
             onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
             <div style={{fontSize:24,fontFamily:"Bebas Neue,sans-serif",color:k.col,letterSpacing:1}}>{k.v}</div>
@@ -897,12 +897,15 @@ function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack,allEnquiries,onL
   );
 }
 
-function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab,enquiries,onLinkEnquiry}){
+function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab,enquiries,onLinkEnquiry,initialStatusFilter}){
   const [view,setView]=useState("list");const [sel,setSel]=useState(null);const [filter,setFilter]=useState("All");
+  const [statusFilter,setStatusFilter]=useState(initialStatusFilter||"All");
   const [busy,setBusy]=useState(false);
   const blank={name:"",type:"Wedding",phone:"",email:"",abn:"",status:"Lead",eventDate:"",venue:"",notes:"",value:"",paid:"0",source:""};
   const [form,setForm]=useState(blank);
-  const filtered=filter==="All"?clients:clients.filter(c=>c.type===filter);
+  const LEAD_STATUSES=["Lead","Inquiry","Opportunity"];
+  const typeFiltered=filter==="All"?clients:clients.filter(c=>c.type===filter);
+  const filtered=statusFilter==="leads"?typeFiltered.filter(c=>LEAD_STATUSES.includes(c.status)):statusFilter!=="All"?typeFiltered.filter(c=>c.status===statusFilter):typeFiltered;
   const today=new Date();today.setHours(0,0,0,0);
   const gigCountFor=c=>(enquiries||[]).filter(e=>e.clientId===c.id).length;
   const upcomingCountFor=c=>(enquiries||[]).filter(e=>e.clientId===c.id&&e.eventDate&&new Date(e.eventDate)>=today).length;
@@ -976,10 +979,16 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab,enquiri
         <div><h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Client CRM</h2><div style={{fontSize:12,color:C.green,marginTop:2}}>{"\u2713"} Synced from Gmail</div></div>
         <Btn onClick={()=>setView("new")}>+ Add Client</Btn>
       </div>
-      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+      <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
         {["All","Wedding","Birthday","Corporate","Festival"].map(t=>(
           <button key={t} onClick={()=>setFilter(t)} style={{background:filter===t?C.gold:C.surface,color:filter===t?"#000":C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t}</button>
         ))}
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+        {[{k:"All",l:"All Statuses"},{k:"leads",l:"🔥 Active Leads"},{k:"Confirmed",l:"✅ Confirmed"},{k:"Completed",l:"✓ Completed"}].map(s=>(
+          <button key={s.k} onClick={()=>setStatusFilter(s.k)} style={{background:statusFilter===s.k?C.coral:C.surface,color:statusFilter===s.k?"#fff":C.muted,border:`1px solid ${statusFilter===s.k?C.coral:C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>{s.l}</button>
+        ))}
+        {statusFilter!=="All"&&<button onClick={()=>setStatusFilter("All")} style={{background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer"}}>✕ Clear</button>}
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {filtered.map(c=>{
@@ -1292,12 +1301,17 @@ function Settings({biz,onSaveBiz}){
 }
 
 // -- DJ ROSTER -----------------------------------------------------
-function Roster({djs,onSaveDj,onToggleDj}){
+function Roster({djs,onSaveDj,onToggleDj,onDeleteDj}){
   const [editing,setEditing]=useState(null);const [form,setForm]=useState({});
   const startEdit=dj=>{setEditing(dj.id);setForm({...dj});};
   const save=async()=>{
     try{await onSaveDj({...form});setEditing(null);}
     catch(e){alert("Couldn't save DJ: "+(e.message||e));}
+  };
+  const del=async dj=>{
+    if(!window.confirm(`Remove ${dj.name} from the roster?`))return;
+    try{await onDeleteDj(dj.id);}
+    catch(e){alert("Couldn't delete DJ: "+(e.message||e));}
   };
   const add=async()=>{
     const n={name:"New DJ",role:"Resident DJ",styles:["Open Format"],rate:800,available:true,bio:"",instagram:""};
@@ -1335,6 +1349,7 @@ function Roster({djs,onSaveDj,onToggleDj}){
                   <div style={{display:"flex",gap:5}}>
                     <button onClick={()=>onToggleDj(dj)} style={{background:dj.available?C.coral+"22":C.green+"22",color:dj.available?C.coral:C.green,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>{dj.available?"Busy":"Free"}</button>
                     <button onClick={()=>startEdit(dj)} style={{background:C.gold+"22",color:C.gold,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>{"\u270F"}{"\uFE0F"} Edit</button>
+                    <button onClick={()=>del(dj)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>\uD83D\uDDD1 Delete</button>
                   </div>
                 </div>
               </>
@@ -2457,7 +2472,9 @@ export default function App(){
   const [enquiries,setEnquiries]=useState([]);
   const [biz,setBiz]=useState(DEFAULT_BIZ);
   const [tab,setTab]=useState("dashboard");
+  const [crmStatusFilter,setCrmStatusFilter]=useState("All");
   const [exportStatus,setExportStatus]=useState("");
+  const onTabClick=(t,statusFilter)=>{setTab(t);if(statusFilter)setCrmStatusFilter(statusFilter);};
 
   // ---- Auth session ----
   useEffect(()=>{
@@ -2522,6 +2539,7 @@ export default function App(){
     return saved;
   };
   const onToggleDj=async dj=>{const saved=await saveDj({...dj,available:!dj.available});setDjs(prev=>prev.map(x=>x.id===saved.id?saved:x));};
+  const onDeleteDj=async id=>{await deleteDj(id);setDjs(prev=>prev.filter(x=>x.id!==id));};
   const onSaveBiz=async b=>{const saved=await saveSettings(b);setBiz(saved);return saved;};
   const onSubmitLead=async lead=>{await onSaveClient(lead);};
   const onSavePackage=async p=>{
@@ -2552,7 +2570,7 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",gap:10}}><EQBars/><LogoW height={30}/></div>
         <nav style={{display:"flex",gap:2,flexWrap:"wrap",justifyContent:"flex-end",alignItems:"center"}}>
           {NAV.map(n=>(
-            <button key={n.id} onClick={()=>setTab(n.id)} style={{background:tab===n.id?C.gold+"18":"transparent",color:tab===n.id?C.gold:C.muted,border:`1px solid ${tab===n.id?C.gold+"44":"transparent"}`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:tab===n.id?700:400}}>
+            <button key={n.id} onClick={()=>{setTab(n.id);setCrmStatusFilter("All");}} style={{background:tab===n.id?C.gold+"18":"transparent",color:tab===n.id?C.gold:C.muted,border:`1px solid ${tab===n.id?C.gold+"44":"transparent"}`,borderRadius:8,padding:"5px 9px",fontSize:12,fontWeight:tab===n.id?700:400}}>
               <span>{n.icon}</span><span style={{marginLeft:3}}>{n.label}</span>
             </button>
           ))}
@@ -2567,10 +2585,10 @@ export default function App(){
           <div style={{textAlign:"center",color:C.muted,padding:"60px 0"}}>Loading your data{"\u2026"}</div>
         ):(
           <>
-            {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} djs={djs} setTab={setTab}/>}
-            {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab} enquiries={enquiries} onLinkEnquiry={onLinkEnquiry}/>}
+            {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} djs={djs} setTab={setTab} onTabClick={onTabClick}/>}
+            {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab} enquiries={enquiries} onLinkEnquiry={onLinkEnquiry} initialStatusFilter={crmStatusFilter}/>}
             {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
-            {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj}/>}
+            {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj} onDeleteDj={onDeleteDj}/>}
             {tab==="packages"&&<Packages packages={packages} addons={addons} onSavePackage={onSavePackage} onDeletePackage={onDeletePackage} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>}
             {tab==="calendar"&&<CalendarTab biz={biz}/>}
             {tab==="specials"&&<Specials clients={clients} biz={biz}/>}
