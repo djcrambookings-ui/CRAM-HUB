@@ -162,7 +162,7 @@ function LineItemRow({item,idx,onChange,onRemove}){
         <textarea rows={2} value={item.desc} onChange={e=>onChange(idx,"desc",e.target.value)} placeholder="Description shown on invoice..." style={{fontSize:12,padding:"8px 10px",resize:"vertical",marginTop:4}}/>
       </div>
       <div style={{textAlign:"right",marginTop:4,fontSize:12,color:C.muted}}>
-        Line total: <span style={{color:C.gold,fontWeight:700,marginLeft:4}}>{fmt$(Number(item.qty)*Number(item.rate)||0)} ex GST</span>
+        Line total: <span style={{color:C.gold,fontWeight:700,marginLeft:4}}>{fmt$(Number(item.qty)*Number(item.rate)||0)}</span>
       </div>
     </div>
   );
@@ -171,7 +171,8 @@ function LineItemRow({item,idx,onChange,onRemove}){
 // -- PDF INVOICE GENERATOR -----------------------------------------
 function generateInvoicePDF(inv, biz) {
   const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
-  const gst = subtotal*0.1;
+  const includeGST = inv.includeGST!==false;
+  const gst = includeGST?subtotal*0.1:0;
   const total = subtotal+gst;
   const isPaid = inv.status==="Paid";
   const isOverdue = inv.status==="Overdue";
@@ -200,7 +201,7 @@ function generateInvoicePDF(inv, biz) {
   <div style="background:#0A0A0F;padding:28px 32px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center">
     <img src="${LOGO_W}" style="height:52px;object-fit:contain" alt="C-RAM Entertainment"/>
     <div style="text-align:right">
-      <div style="font-size:28px;font-weight:900;color:#F5C518;letter-spacing:3px;line-height:1">TAX INVOICE</div>
+      <div style="font-size:28px;font-weight:900;color:#F5C518;letter-spacing:3px;line-height:1">${includeGST?"TAX INVOICE":"INVOICE"}</div>
       <div style="font-size:16px;font-weight:700;color:#fff;margin-top:4px">${inv.id}</div>
     </div>
   </div>
@@ -248,8 +249,8 @@ function generateInvoicePDF(inv, biz) {
         <tr style="background:#111">
           <th style="padding:11px 12px;text-align:left;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px">Description</th>
           <th style="padding:11px 12px;text-align:center;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:60px">Qty</th>
-          <th style="padding:11px 12px;text-align:right;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:130px">Unit (ex GST)</th>
-          <th style="padding:11px 12px;text-align:right;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:130px">Amount (ex GST)</th>
+          <th style="padding:11px 12px;text-align:right;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:130px">${includeGST?"Unit (ex GST)":"Unit Price"}</th>
+          <th style="padding:11px 12px;text-align:right;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:130px">${includeGST?"Amount (ex GST)":"Amount"}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -260,14 +261,15 @@ function generateInvoicePDF(inv, biz) {
   <div style="background:#F9F9F9;border:1px solid #eee;border-top:none;padding:16px 32px">
     <div style="display:flex;justify-content:flex-end">
       <div style="width:280px">
+        ${includeGST?`
         <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#555;border-bottom:1px solid #eee">
           <span>Subtotal (ex GST)</span><span>${fmt$(subtotal)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#555;border-bottom:1px solid #eee">
           <span>GST (10%)</span><span>${fmt$(gst)}</span>
-        </div>
+        </div>`:""}
         <div style="display:flex;justify-content:space-between;padding:12px 0 0;font-size:17px;font-weight:800;color:#111;border-top:2px solid #111;margin-top:4px">
-          <span>TOTAL (inc GST)</span><span style="color:#F5C518">${fmt$(total)}</span>
+          <span>${includeGST?"TOTAL (inc GST)":"TOTAL"}</span><span style="color:#F5C518">${fmt$(total)}</span>
         </div>
       </div>
     </div>
@@ -321,13 +323,15 @@ async function exportAllToExcel(clients, invoices, djs, biz){
   // Tag each invoice with its financial year
   const invSummary = invoices.map(inv=>{
     const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
-    const gst = subtotal*0.1;
+    const hasGST = inv.includeGST!==false;
+    const gst = hasGST?subtotal*0.1:0;
     return {
       "FY": getFY(inv.date)||"", "Invoice #": inv.id, "Client": inv.client, "Client Email": inv.clientEmail||"",
       "Client Phone": inv.clientPhone||"", "Client ABN": inv.clientABN||"",
       "Date": inv.date||"", "Due": inv.due||"", "Status": inv.status||"",
       "Paid Date": inv.paidDate||"",
-      "Subtotal (ex GST)": num(subtotal), "GST (10%)": num(gst), "Total (inc GST)": num(subtotal+gst),
+      "Subtotal (ex GST)": hasGST?num(subtotal):"", "GST (10%)": hasGST?num(gst):"", "Total": num(subtotal+gst),
+      "GST Included": hasGST?"Yes":"No",
       "Payment Ref": inv.paymentRef||inv.id, "Notes": inv.notes||""
     };
   });
@@ -424,15 +428,17 @@ async function exportAllToExcel(clients, invoices, djs, biz){
 // -- SEND MODAL ----------------------------------------------------
 function SendModal({inv, biz, onClose, onSent}) {
   const subtotal = inv.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
-  const total = (subtotal*1.1).toFixed(2);
-  const totalStr = Number(total).toLocaleString("en-AU",{minimumFractionDigits:2});
+  const hasGST = inv.includeGST!==false;
+  const totalNum = hasGST?subtotal*1.1:subtotal;
+  const totalStr = totalNum.toLocaleString("en-AU",{minimumFractionDigits:2});
   const dueStr = inv.due ? new Date(inv.due).toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"}) : "";
+  const gstLabel = hasGST?" inc GST":"";
 
-  const defaultSubject = `Invoice ${inv.id} from ${biz.name} \u2014 $${totalStr} inc GST`;
+  const defaultSubject = `Invoice ${inv.id} from ${biz.name} \u2014 $${totalStr}${gstLabel}`;
   const defaultBody =
 `Hi ${inv.client},
 
-Please find your invoice ${inv.id} from ${biz.name} for $${totalStr} inc GST${dueStr ? `, due ${dueStr}` : ""}.
+Please find your invoice ${inv.id} from ${biz.name} for $${totalStr}${gstLabel}${dueStr ? `, due ${dueStr}` : ""}.
 
 Payment details:
 Bank: ${biz.bank || "[Bank]"}
@@ -445,7 +451,7 @@ Any questions, just reply to this email or call ${biz.phone}.
 Thanks,
 ${biz.name}`;
 
-  const smsText = `Hi ${inv.client}, your invoice ${inv.id} from ${biz.name} for $${totalStr} inc GST is ready${dueStr ? ` (due ${dueStr})` : ""}. Ref: ${inv.paymentRef || inv.id}. Thanks!`;
+  const smsText = `Hi ${inv.client}, your invoice ${inv.id} from ${biz.name} for $${totalStr}${gstLabel} is ready${dueStr ? ` (due ${dueStr})` : ""}. Ref: ${inv.paymentRef || inv.id}. Thanks!`;
 
   const [tab, setTab] = useState("email");
   const [subject, setSubject] = useState(defaultSubject);
@@ -600,7 +606,7 @@ function allFYs(clients,invoices){
   s.add(currentFY());
   return [...s].sort().reverse();
 }
-function invTotal(inv){return inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1;}
+function invTotal(inv){const sub=inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0);return inv.includeGST!==false?sub*1.1:sub;}
 
 // -- DASHBOARD -----------------------------------------------------
 function Dashboard({clients,invoices,djs,setTab}){
@@ -610,7 +616,7 @@ function Dashboard({clients,invoices,djs,setTab}){
   const fyClients=clients.filter(c=>getFY(c.eventDate)===fy);
   const paid=fyInvoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+invTotal(i),0);
   const outstanding=fyInvoices.filter(i=>i.status!=="Paid"&&i.status!=="Draft").reduce((s,i)=>s+invTotal(i),0);
-  const gstCollected=fyInvoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*0.1,0);
+  const gstCollected=fyInvoices.filter(i=>i.status==="Paid"&&i.includeGST!==false).reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*0.1,0);
   const confirmed=fyClients.filter(c=>c.status==="Confirmed").length;
   const leads=fyClients.filter(c=>["Lead","Inquiry","Opportunity"].includes(c.status)).length;
   const upcoming=[...fyClients].filter(c=>c.eventDate&&new Date(c.eventDate)>=new Date()).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate)).slice(0,6);
@@ -822,11 +828,11 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
   const [view,setView]=useState(pendingOpen?"form":"list");
   const [editing,setEditing]=useState(()=>{if(pendingOpen){PENDING_INVOICE=null;return pendingOpen;}return null;});
   const blankItem={catalogueLabel:"",desc:"",qty:1,rate:""};
-  const blankForm={client:"",clientEmail:"",clientPhone:"",clientABN:"",date:new Date().toISOString().split("T")[0],due:"",items:[{...blankItem}],status:"Draft",notes:"",paymentRef:""};
-  const getForm=inv=>inv?{client:inv.client,clientEmail:inv.clientEmail||"",clientPhone:inv.clientPhone||"",clientABN:inv.clientABN||"",date:inv.date,due:inv.due||"",items:inv.items.map(i=>({...i})),status:inv.status,notes:inv.notes||"",paymentRef:inv.paymentRef||""}:null;
+  const blankForm={client:"",clientEmail:"",clientPhone:"",clientABN:"",date:new Date().toISOString().split("T")[0],due:"",items:[{...blankItem}],status:"Draft",notes:"",paymentRef:"",includeGST:true};
+  const getForm=inv=>inv?{client:inv.client,clientEmail:inv.clientEmail||"",clientPhone:inv.clientPhone||"",clientABN:inv.clientABN||"",date:inv.date,due:inv.due||"",items:inv.items.map(i=>({...i})),status:inv.status,notes:inv.notes||"",paymentRef:inv.paymentRef||"",includeGST:inv.includeGST!==false}:null;
   const [form,setForm]=useState(()=>{if(pendingOpen){const inv=invoices.find(i=>i.id===pendingOpen);return getForm(inv)||blankForm;}return blankForm;});
   const sub=form.items.reduce((s,i)=>s+(Number(i.qty)*Number(i.rate)||0),0);
-  const gstAmt=sub*0.1;const totalAmt=sub+gstAmt;
+  const gstAmt=form.includeGST?sub*0.1:0;const totalAmt=sub+gstAmt;
   const updItem=(idx,field,val)=>{const it=[...form.items];it[idx]={...it[idx],[field]:val};setForm({...form,items:it});};
   const remItem=idx=>setForm({...form,items:form.items.filter((_,i)=>i!==idx)});
   const prefill=name=>{const c=clients.find(x=>x.name===name);if(c)setForm(f=>({...f,client:name,clientEmail:c.email||"",clientPhone:c.phone||"",clientABN:c.abn||""}));else setForm(f=>({...f,client:name}));};
@@ -860,7 +866,7 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
       {sending&&<SendModal inv={sending} biz={biz} onClose={()=>setSending(null)} onSent={()=>{onSetInvoiceStatus(sending,"Sent");setSending(null);}}/>}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18,flexWrap:"wrap"}}>
         <Btn variant="ghost" onClick={()=>{setView("list");setEditing(null);}}>{"\u2190"} Back</Btn>
-        <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{editing?"Edit Invoice":"New Tax Invoice"}</h2>
+        <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:2,color:C.gold}}>{editing?"Edit Invoice":form.includeGST?"New Tax Invoice":"New Invoice"}</h2>
         {editing&&<Btn variant="green" onClick={()=>handlePDF(invoices.find(i=>i.id===editing)||{...form,id:editing})}>{"\uD83D\uDDA8"} PDF</Btn>}
         {editing&&<Btn variant="outline" onClick={()=>setSending(invoices.find(i=>i.id===editing)||{...form,id:editing})}>{"\uD83D\uDCE4"} Send</Btn>}
       </div>
@@ -899,16 +905,19 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
       <Card style={{marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1}}>Line Items</h4>
-          <span style={{fontSize:10,color:C.dim}}>Prices ex GST</span>
+          <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",fontSize:12,color:C.muted}}>
+            <input type="checkbox" checked={!!form.includeGST} onChange={e=>setForm({...form,includeGST:e.target.checked})} style={{accentColor:C.gold,width:14,height:14}}/>
+            Include GST (10%)
+          </label>
         </div>
         {form.items.map((item,idx)=><LineItemRow key={idx} item={item} idx={idx} onChange={updItem} onRemove={remItem}/>)}
         <Btn variant="ghost" onClick={()=>setForm({...form,items:[...form.items,{...blankItem}]})} style={{fontSize:12,marginTop:4}}>+ Add Line Item</Btn>
         <div style={{borderTop:`1px solid ${C.border}`,marginTop:14,paddingTop:12,display:"flex",justifyContent:"flex-end"}}>
           <div style={{width:280}}>
-            {[["Subtotal (ex GST)",fmt$(sub)],["GST (10%)",fmt$(gstAmt)]].map(([l,v])=>(
+            {form.includeGST&&[["Subtotal (ex GST)",fmt$(sub)],["GST (10%)",fmt$(gstAmt)]].map(([l,v])=>(
               <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${C.border}`,fontSize:13,color:C.muted}}><span>{l}</span><span style={{color:C.text}}>{v}</span></div>
             ))}
-            <div style={{display:"flex",justifyContent:"space-between",padding:"10px 0",fontSize:15,fontWeight:800,color:C.gold}}><span>Total (inc GST)</span><span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:22}}>{fmt$(totalAmt)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",padding:"10px 0",fontSize:15,fontWeight:800,color:C.gold}}><span>{form.includeGST?"Total (inc GST)":"Total"}</span><span style={{fontFamily:"Bebas Neue,sans-serif",fontSize:22}}>{fmt$(totalAmt)}</span></div>
           </div>
         </div>
       </Card>
@@ -939,7 +948,7 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {invoices.map(inv=>{
-          const s=inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0);const tot=s*1.1;
+          const s=inv.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0);const tot=inv.includeGST!==false?s*1.1:s;
           return(
             <Card key={inv.id} style={{borderColor:inv.status==="Overdue"?C.coral+"66":C.border}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
@@ -953,7 +962,7 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
                 </div>
                 <div style={{textAlign:"right"}}>
                   <div style={{fontSize:22,fontFamily:"Bebas Neue,sans-serif",color:inv.status==="Paid"?C.green:inv.status==="Overdue"?C.coral:C.gold}}>{fmt$(tot)}</div>
-                  <div style={{fontSize:10,color:C.dim}}>inc GST</div>
+                  {inv.includeGST!==false&&<div style={{fontSize:10,color:C.dim}}>inc GST</div>}
                   <div style={{display:"flex",gap:5,justifyContent:"flex-end",marginTop:6,flexWrap:"wrap"}}>
                     <Btn variant="green" onClick={()=>handlePDF(inv)} style={{fontSize:11,padding:"4px 9px"}}>{"\uD83D\uDDA8"} PDF</Btn>
                     <Btn variant="outline" onClick={()=>setSending(inv)} style={{fontSize:11,padding:"4px 9px"}}>{"\uD83D\uDCE4"} Send</Btn>
