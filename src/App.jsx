@@ -184,7 +184,7 @@ function generateInvoicePDF(inv, biz) {
 
   const rows = inv.items.map(item=>`
     <tr>
-      <td style="padding:10px 12px;font-size:13px;color:#333;line-height:1.5;white-space:pre-wrap;border-bottom:1px solid #f0f0f0">${item.desc}</td>
+      <td style="padding:10px 12px;font-size:13px;color:#333;line-height:1.5;white-space:pre-wrap;border-bottom:1px solid #f0f0f0">${item.catalogueLabel&&item.catalogueLabel!==item.desc?`<div style="font-weight:700;font-size:13px;color:#111;margin-bottom:3px">${item.catalogueLabel}</div>`:""}${item.desc||item.catalogueLabel||""}</td>
       <td style="padding:10px 12px;text-align:center;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0">${item.qty}</td>
       <td style="padding:10px 12px;text-align:right;font-size:13px;color:#333;border-bottom:1px solid #f0f0f0">${fmt$(Number(item.rate))}</td>
       <td style="padding:10px 12px;text-align:right;font-size:13px;font-weight:600;color:#111;border-bottom:1px solid #f0f0f0">${fmt$(Number(item.qty)*Number(item.rate))}</td>
