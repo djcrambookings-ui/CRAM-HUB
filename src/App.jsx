@@ -160,6 +160,12 @@ function LineItemRow({item,idx,onChange,onRemove}){
         <input type="number" min="0" step="0.01" style={{textAlign:"right",fontSize:13}} placeholder="0.00" value={item.rate} onChange={e=>onChange(idx,"rate",e.target.value)}/>
         <button onClick={()=>onRemove(idx)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"7px",fontSize:12}}>{"\u2715"}</button>
       </div>
+      {item.catalogueLabel&&(
+        <div style={{marginBottom:8,padding:"6px 10px",background:C.gold+"18",border:`1px solid ${C.gold}44`,borderRadius:6}}>
+          <div style={{fontSize:10,fontWeight:700,color:C.gold,textTransform:"uppercase",letterSpacing:0.5}}>Package / Service</div>
+          <div style={{fontSize:13,fontWeight:700,color:C.text,marginTop:2}}>{item.catalogueLabel}</div>
+        </div>
+      )}
       <div>
         <label style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:0.5}}>Description on Invoice</label>
         <textarea rows={2} value={item.desc} onChange={e=>onChange(idx,"desc",e.target.value)} placeholder="Description shown on invoice..." style={{fontSize:12,padding:"8px 10px",resize:"vertical",marginTop:4}}/>
