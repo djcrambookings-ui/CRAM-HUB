@@ -1295,6 +1295,20 @@ function Specials({clients, biz}){
   const [status, setStatus] = useState("idle"); // idle | sending | done | error
   const [progress, setProgress] = useState({sent:0, total:0, fails:[]});
   const [copied, setCopied] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("correct grammar and rephrase professionally");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  async function aiImprove(){
+    if(!body.trim())return;
+    setAiLoading(true);
+    try{
+      const res=await fetch("/api/ai-improve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:body,instruction:aiPrompt})});
+      const d=await res.json();
+      if(!res.ok)throw new Error(d.error||"AI improve failed");
+      setBody(d.improved||body);
+    }catch(e){alert("AI error: "+e.message);}
+    finally{setAiLoading(false);}
+  }
 
   const toggle = id => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const selectAll = () => setSelected(new Set(withEmail.map(c => c.id)));
@@ -1341,6 +1355,21 @@ function Specials({clients, biz}){
         <input value={subject} onChange={e=>setSubject(e.target.value)} style={{width:"100%",background:C.bg,color:C.text,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 11px",fontSize:13,fontFamily:"inherit",marginBottom:12}} />
         <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Message</label>
         <textarea value={body} onChange={e=>setBody(e.target.value)} rows={13} style={{width:"100%",background:C.bg,color:C.text,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 11px",fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.6}} />
+        {/* AI assist */}
+        <div style={{display:"flex",gap:8,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
+          <span style={{fontSize:12,color:C.muted,whiteSpace:"nowrap"}}>AI assist:</span>
+          <select value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)} style={{flex:1,minWidth:180,fontSize:12,padding:"6px 10px",background:C.bg,color:C.text,border:`1px solid ${C.border}`,borderRadius:6}}>
+            <option value="correct grammar and rephrase professionally">Correct grammar &amp; rephrase professionally</option>
+            <option value="make more friendly and warm">Make more friendly &amp; warm</option>
+            <option value="make more formal and concise">Make more formal &amp; concise</option>
+            <option value="expand with more detail">Expand with more detail</option>
+            <option value="shorten and tighten">Shorten &amp; tighten</option>
+          </select>
+          <button onClick={aiImprove} disabled={aiLoading||!body.trim()}
+            style={{background:C.purple,color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:aiLoading||!body.trim()?"default":"pointer",opacity:(aiLoading||!body.trim())?0.5:1,whiteSpace:"nowrap"}}>
+            {aiLoading?"Improving…":"✨ Improve"}
+          </button>
+        </div>
         <p style={{fontSize:11,color:C.dim,marginTop:6}}>Tip: type <b style={{color:C.muted}}>{"{name}"}</b> and the "one private email each" option below will swap in each person's first name. (The Gmail/BCC option sends one shared message, so it can't personalise.)</p>
       </Card>
 
@@ -1698,8 +1727,8 @@ function Enquiries({biz}){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({text:reply,instruction:aiPrompt})
       });
-      if(!res.ok)throw new Error("AI improve failed");
       const d=await res.json();
+      if(!res.ok)throw new Error(d.error||"AI improve failed");
       setReply(d.improved||reply);
     }catch(e){alert("AI improve error: "+e.message);}
     finally{setAiLoading(false);}
