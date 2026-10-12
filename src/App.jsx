@@ -840,14 +840,17 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
   const remItem=idx=>setForm({...form,items:form.items.filter((_,i)=>i!==idx)});
   const prefill=name=>{const c=clients.find(x=>x.name===name);if(c)setForm(f=>({...f,client:name,clientEmail:c.email||"",clientPhone:c.phone||"",clientABN:c.abn||""}));else setForm(f=>({...f,client:name}));};
   const openNew=()=>{setEditing(null);setForm(blankForm);setView("form");};
-  const openEdit=inv=>{setEditing(inv.id);setForm(getForm(inv));setView("form");};
+  const openEdit=inv=>{setEditing(inv.id);setForm({...getForm(inv),invoiceId:inv.id});setView("form");};
   const [busy,setBusy]=useState(false);
   const save=async()=>{
     if(!form.client)return;
     let inv;
     if(editing){
       const existing=invoices.find(i=>i.id===editing)||{};
-      inv={...existing,...form,id:editing,items:form.items};
+      const newId=form.invoiceId||editing;
+      inv={...existing,...form,id:newId,items:form.items};
+      // If the number changed, delete the old record and save under new id
+      if(newId!==editing){inv._oldId=editing;}
     }else{
       inv={...form,id:form.invoiceId||nextInvoiceNo(invoices,biz),items:form.items};
     }
@@ -876,12 +879,10 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
       <Card style={{marginBottom:12}}>
         <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>Invoice Details</h4>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          {!editing&&(
-            <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}>
-              <label style={{fontSize:11,fontWeight:600,color:C.muted}}>Invoice Number <span style={{fontWeight:400,color:C.dim}}>(auto-generated — edit to override)</span></label>
-              <input value={form.invoiceId||nextInvoiceNo(invoices,biz)} onChange={e=>setForm({...form,invoiceId:e.target.value})} placeholder={nextInvoiceNo(invoices,biz)} style={{fontFamily:"monospace",fontWeight:700,fontSize:15,color:C.gold,letterSpacing:1}}/>
-            </div>
-          )}
+          <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}>
+            <label style={{fontSize:11,fontWeight:600,color:C.muted}}>Invoice Number <span style={{fontWeight:400,color:C.dim}}>{editing?"(editable — changing this renames the invoice)":"(auto-generated — edit to override)"}</span></label>
+            <input value={form.invoiceId||(editing?"":nextInvoiceNo(invoices,biz))} onChange={e=>setForm({...form,invoiceId:e.target.value})} placeholder={editing?editing:nextInvoiceNo(invoices,biz)} style={{fontFamily:"monospace",fontWeight:700,fontSize:15,color:C.gold,letterSpacing:1}}/>
+          </div>
           <div style={{display:"flex",flexDirection:"column",gap:5,gridColumn:"1/-1"}}>
             <label style={{fontSize:11,fontWeight:600,color:C.muted}}>Client *</label>
             <select value={form.client} onChange={e=>prefill(e.target.value)}>
@@ -1944,8 +1945,16 @@ export default function App(){
     return saved;
   };
   const onSaveInvoice=async inv=>{
-    const saved=await saveInvoice(inv);
-    setInvoices(prev=>prev.some(x=>x.id===saved.id)?prev.map(x=>x.id===saved.id?saved:x):[...prev,saved]);
+    const oldId=inv._oldId;
+    const {_oldId,...cleanInv}=inv;
+    const saved=await saveInvoice(cleanInv);
+    if(oldId&&oldId!==saved.id){
+      // Renamed: delete old record, add new one
+      try{await deleteInvoice({id:oldId});}catch(e){/* best effort */}
+      setInvoices(prev=>[...prev.filter(x=>x.id!==oldId&&x.id!==saved.id),saved]);
+    }else{
+      setInvoices(prev=>prev.some(x=>x.id===saved.id)?prev.map(x=>x.id===saved.id?saved:x):[...prev,saved]);
+    }
     return saved;
   };
   const onDeleteInvoice=async inv=>{await deleteInvoice(inv);setInvoices(prev=>prev.filter(x=>x.id!==inv.id));};
