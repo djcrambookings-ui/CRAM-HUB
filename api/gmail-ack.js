@@ -32,13 +32,13 @@ export default async function handler(req, res) {
 
     const textBody = `Hi ${firstName},
 
-Great news — your enquiry has landed safely in our inbox and we're already excited about it!
+Thank you for reaching out to ${bizName}!
 
-We've received your message ${cleanSubject ? `regarding "${cleanSubject}"` : "about your upcoming event"} and Marc will personally be in touch shortly to chat through all the details.
+We've received your enquiry${cleanSubject ? ` regarding "${cleanSubject}"` : ""} and will be in touch shortly to discuss your event in more detail.
 
-In the meantime, feel free to have a browse of our packages at c-rament.com.au — and if you think of anything else you'd like to add, just hit reply.
+In the meantime, feel free to check out our packages and services on our website at c-rament.com.au.
 
-We can't wait to get the party started! 🎶🕺
+We look forward to making your event an unforgettable experience! 🎶
 
 Warm regards,
 Marc
@@ -47,12 +47,12 @@ C-RAM Entertainment
 🌐 c-rament.com.au`;
 
     const htmlBody = `
-<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.8;color:#222;max-width:560px">
+<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#222;max-width:560px">
   <p>Hi ${firstName},</p>
-  <p>Great news — your enquiry has landed safely in our inbox and we're already excited about it! 🎉</p>
-  <p>We've received your message ${subjectRef} and <strong>Marc will personally be in touch shortly</strong> to chat through all the details.</p>
-  <p>In the meantime, feel free to have a browse of our packages at <a href="https://c-rament.com.au" style="color:#F5C518;text-decoration:none;font-weight:bold">c-rament.com.au</a> — and if you think of anything else you'd like to add, just hit reply.</p>
-  <p>We can't wait to get the party started! 🎶🕺</p>
+  <p>Thank you for reaching out to <strong>${bizName}</strong>!</p>
+  <p>We've received your enquiry${cleanSubject ? ` regarding <em>"${cleanSubject}"</em>` : ""} and will be in touch shortly to discuss your event in more detail.</p>
+  <p>In the meantime, feel free to check out our packages and services on our website at <a href="https://c-rament.com.au" style="color:#F5C518;text-decoration:none;font-weight:bold">c-rament.com.au</a>.</p>
+  <p>We look forward to making your event an <strong>unforgettable experience</strong>! 🎶</p>
   <p style="margin-top:20px">Warm regards,<br><strong>Marc</strong><br>
   <span style="color:#888">C-RAM Entertainment</span><br>
   <span style="color:#888;font-size:13px">📱 0432 775 402 &nbsp;·&nbsp; 🌐 <a href="https://c-rament.com.au" style="color:#888">c-rament.com.au</a></span>
@@ -68,7 +68,7 @@ C-RAM Entertainment
     await transporter.sendMail({
       from: `Marc @ C-RAM Entertainment <${user}>`,
       to,
-      subject: `Got your enquiry${cleanSubject ? ` — ${cleanSubject}` : ""} 🎶`,
+      subject: `Thanks for your enquiry${cleanSubject ? ` — ${cleanSubject}` : ""} | ${bizName}`,
       text: textBody,
       html: htmlBody,
       replyTo: user,
