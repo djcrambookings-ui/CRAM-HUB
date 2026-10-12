@@ -949,7 +949,8 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
   );
 
   const totalPaid=invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+invTotal(i),0);
-  const totalOwing=invoices.filter(i=>i.status!=="Paid").reduce((s,i)=>s+invTotal(i),0);
+  const totalSent=invoices.filter(i=>i.status==="Sent").reduce((s,i)=>s+invTotal(i),0);
+  const totalDraft=invoices.filter(i=>i.status==="Draft").reduce((s,i)=>s+invTotal(i),0);
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
       {sending&&<SendModal inv={sending} biz={biz} onClose={()=>setSending(null)} onSent={()=>{onSetInvoiceStatus(sending,"Sent");setSending(null);}}/>}
@@ -957,8 +958,8 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
         <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:30,letterSpacing:2,color:C.gold}}>Tax Invoices</h2>
         <Btn onClick={openNew}>+ New Invoice</Btn>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
-        {[[fmt$(totalPaid),"Collected",C.green],[fmt$(totalOwing),"Owing",C.coral],[invoices.length,"Total",C.text]].map(([v,l,col])=>(
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:16}}>
+        {[[fmt$(totalPaid),"Paid",C.green],[fmt$(totalSent),"Sent / Owing",C.coral],[fmt$(totalDraft),"Draft",C.muted],[invoices.length,"Total",C.text]].map(([v,l,col])=>(
           <Card key={l} style={{textAlign:"center"}}><div style={{fontSize:20,fontFamily:"Bebas Neue,sans-serif",color:col}}>{v}</div><div style={{fontSize:11,color:C.muted}}>{l}</div></Card>
         ))}
       </div>
