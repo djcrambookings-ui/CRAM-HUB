@@ -1584,9 +1584,13 @@ function AddonsEditor({addons,onSaveAddon,onDeleteAddon}){
 }
 
 // -- ENQUIRIES (Gmail inbox for client enquiries with AI-assisted replies) ---
-const ENQUIRY_KEYWORDS = ["enquiry","enquire","booking","book","event","dj","wedding","birthday","corporate","party","hire","available","quote","price","package"];
+const ENQUIRY_KEYWORDS = ["enquiry","enquire","booking","book","event","dj","wedding","birthday","corporate","party","hire","available","quote","price","package","services","interested","information","help","question","hi","hello","hey","entertainment","music","dance","reception","celebrate","celebration","anniversary","engagement"];
+const CALENDAR_PREFIXES_FE = ["invitation:","updated invitation:","accepted:","declined:","tentative:","canceled:","cancelled:","reminder:","new event:"];
 function isLikelyEnquiry(subject="",snippet="") {
-  const txt=(subject+" "+snippet).toLowerCase();
+  const subLower=(subject||"").toLowerCase().trim();
+  if(CALENDAR_PREFIXES_FE.some(p=>subLower.startsWith(p))) return false;
+  if(subLower.includes("@")&&subLower.includes("calendar")) return false;
+  const txt=(subLower+" "+snippet).toLowerCase();
   return ENQUIRY_KEYWORDS.some(k=>txt.includes(k));
 }
 function timeAgo(dateStr){
@@ -1771,11 +1775,11 @@ function Enquiries({biz}){
             style={{padding:"12px 16px",borderBottom:`1px solid ${C.border}`,cursor:"pointer",
               background:selected?.id===t.id?C.gold+"15":t.unread?"#fff2":undefined,
               transition:"background 0.15s"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
-              <div style={{fontWeight:t.unread?700:500,fontSize:13,color:C.text}}>{t.fromName||t.from}</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:2}}>
+              <div style={{fontWeight:t.unread?700:600,fontSize:13,color:C.text,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.subject||"(no subject)"}</div>
               <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",marginLeft:8}}>{timeAgo(t.date)}</div>
             </div>
-            <div style={{fontSize:12,color:t.unread?C.text:C.muted,fontWeight:t.unread?600:400,marginBottom:2}}>{t.subject}</div>
+            <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{t.fromName||t.from}</div>
             <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.snippet}</div>
             {ackStatus[t.id]==="sent"&&<div style={{marginTop:4,fontSize:10,color:C.green}}>✓ Acknowledgement sent</div>}
           </div>

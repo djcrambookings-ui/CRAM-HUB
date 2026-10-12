@@ -8,11 +8,25 @@ import { simpleParser } from "mailparser";
 import { promisify } from "util";
 
 const ENQUIRY_KEYWORDS = [
-  "enquiry","enquire","booking","book","event","dj","wedding","birthday",
-  "corporate","party","hire","available","quote","price","package","function",
+  "enquiry","enquire","enquire","booking","book","event","dj","dj services","wedding",
+  "birthday","corporate","party","hire","available","quote","price","package","function",
+  "services","interested","information","help","question","hi","hello","hey","entertainment",
+  "music","dance","reception","celebrate","celebration","anniversary","engagement",
 ];
+
+// Calendar/notification subjects to exclude
+const CALENDAR_PREFIXES = [
+  "invitation:","updated invitation:","accepted:","declined:","tentative:",
+  "canceled:","cancelled:","reminder:","new event:","event canceled:",
+];
+
 function isLikelyEnquiry(subject = "", snippet = "") {
-  const txt = (subject + " " + snippet).toLowerCase();
+  const subLower = subject.toLowerCase().trim();
+  // Exclude calendar invites / auto-notifications
+  if (CALENDAR_PREFIXES.some((p) => subLower.startsWith(p))) return false;
+  if (subLower.includes("@") && subLower.includes("calendar")) return false;
+  // Match any enquiry keyword in subject or snippet
+  const txt = subLower + " " + snippet.toLowerCase();
   return ENQUIRY_KEYWORDS.some((k) => txt.includes(k));
 }
 
@@ -39,15 +53,15 @@ async function fetchEnquiries(user, password) {
       imap.openBox("INBOX", true, (err, box) => {
         if (err) { imap.end(); return reject(err); }
 
-        // Search last 30 days
+        // Search last 60 days
         const since = new Date();
-        since.setDate(since.getDate() - 30);
+        since.setDate(since.getDate() - 60);
         const sinceFmt = since.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" }).replace(",","");
 
         imap.search(["UNSEEN", ["SINCE", sinceFmt]], (err2, uids) => {
           // Also search all mail from last 30 days if unseen is empty
           imap.search([["SINCE", sinceFmt]], (err3, allUids) => {
-            const ids = (allUids || []).slice(-60); // last 60 messages
+            const ids = (allUids || []).slice(-100); // last 100 messages
             if (!ids.length) { imap.end(); return resolve([]); }
 
             const threads = [];
