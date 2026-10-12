@@ -486,6 +486,7 @@ function rowToEnquiry(r) {
     notes: r.notes || "",
     date: r.received_at || r.created_at || "",
     unread: r.unread !== false,
+    clientId: r.client_id || null,
   };
 }
 
@@ -503,4 +504,24 @@ export async function listEnquiries() {
 export async function markEnquiryRead(id) {
   assertReady();
   await supabase.from("enquiries").update({ unread: false }).eq("id", id);
+}
+
+export async function linkEnquiryToClient(enquiryId, clientId) {
+  assertReady();
+  const { error } = await supabase
+    .from("enquiries")
+    .update({ client_id: clientId || null })
+    .eq("id", enquiryId);
+  if (error) throw error;
+}
+
+export async function listEnquiriesForClient(clientId) {
+  assertReady();
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("event_date", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(rowToEnquiry);
 }

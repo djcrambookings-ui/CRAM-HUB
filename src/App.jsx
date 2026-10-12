@@ -7,7 +7,7 @@ import {
   getSettings, saveSettings,
   listPackages, savePackage, deletePackage,
   listAddons, saveAddon, deleteAddon,
-  listEnquiries, markEnquiryRead,
+  listEnquiries, markEnquiryRead, linkEnquiryToClient, listEnquiriesForClient,
 } from "./db";
 
 // One-shot hand-off used to deep-link an invoice from the CRM tab to the Invoices tab.
@@ -692,7 +692,7 @@ function Dashboard({clients,invoices,djs,setTab}){
 }
 
 // -- CRM -----------------------------------------------------------
-function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack}){
+function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack,allEnquiries,onLinkEnquiry}){
   const [showCompose,setShowCompose]=useState(false);
   const [subject,setSubject]=useState("");
   const [body,setBody]=useState("");
@@ -700,7 +700,21 @@ function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack}){
   const [aiLoading,setAiLoading]=useState(false);
   const [sending,setSending]=useState(false);
   const [sendStatus,setSendStatus]=useState(null);
+  const [gigTab,setGigTab]=useState("upcoming");
+  const [showLinkModal,setShowLinkModal]=useState(false);
+  const [linkSearch,setLinkSearch]=useState("");
   const pct=c.value>0?Math.round((c.paid/c.value)*100):0;
+
+  // Gigs linked to this client
+  const linkedGigs=(allEnquiries||[]).filter(e=>e.clientId===c.id);
+  const today=new Date();today.setHours(0,0,0,0);
+  const upcoming=linkedGigs.filter(e=>{if(!e.eventDate)return false;const d=new Date(e.eventDate);return d>=today;}).sort((a,b)=>new Date(a.eventDate)-new Date(b.eventDate));
+  const past=linkedGigs.filter(e=>{if(!e.eventDate)return false;const d=new Date(e.eventDate);return d<today;}).sort((a,b)=>new Date(b.eventDate)-new Date(a.eventDate));
+  const noDate=linkedGigs.filter(e=>!e.eventDate);
+
+  // Enquiries not yet linked to any client (for linking modal)
+  const unlinkable=(allEnquiries||[]).filter(e=>!e.clientId);
+  const filtered=linkSearch.trim()?unlinkable.filter(e=>(e.fromName||e.subject||"").toLowerCase().includes(linkSearch.toLowerCase())):unlinkable;
 
   async function aiImprove(){
     if(!body.trim())return;
@@ -794,16 +808,104 @@ function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack}){
           </div>
         </Card>
       )}
+
+      {/* ── Gig History ─────────────────────────────────────────── */}
+      <Card style={{marginTop:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+          <h4 style={{fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,margin:0}}>Gig History</h4>
+          <button onClick={()=>{setShowLinkModal(v=>!v);setLinkSearch("");}}
+            style={{background:C.surface,border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"4px 10px",fontSize:11,cursor:"pointer",fontWeight:600}}>
+            {showLinkModal?"✕ Cancel":"+ Link Enquiry"}
+          </button>
+        </div>
+
+        {/* Tab bar */}
+        <div style={{display:"flex",gap:6,marginBottom:14}}>
+          {[["upcoming","🗓 Upcoming",upcoming.length],["past","✅ Past",past.length],["unscheduled","📋 Unscheduled",noDate.length]].map(([id,label,count])=>(
+            <button key={id} onClick={()=>setGigTab(id)}
+              style={{display:"flex",alignItems:"center",gap:5,background:gigTab===id?C.gold:C.surface,color:gigTab===id?"#000":C.muted,border:`1px solid ${gigTab===id?C.gold:C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              {label}
+              {count>0&&<span style={{background:gigTab===id?"#0006":"#fff2",color:gigTab===id?"#000":C.text,borderRadius:99,padding:"1px 6px",fontSize:10,fontWeight:700,minWidth:16,textAlign:"center"}}>{count}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Gig cards */}
+        {(gigTab==="upcoming"?upcoming:gigTab==="past"?past:noDate).length===0?(
+          <div style={{textAlign:"center",color:C.muted,fontSize:13,padding:"20px 0"}}>
+            {gigTab==="upcoming"?"No upcoming gigs linked.":gigTab==="past"?"No past gigs on record.":"No unscheduled enquiries."}
+            <div style={{fontSize:11,marginTop:6,color:C.muted+"99"}}>Use "Link Enquiry" above to attach existing enquiries to this client.</div>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {(gigTab==="upcoming"?upcoming:gigTab==="past"?past:noDate).map((e,i)=>(
+              <div key={e.id} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",background:C.bg,borderRadius:10,borderLeft:`3px solid ${gigTab==="upcoming"?C.green:gigTab==="past"?C.muted:C.purple}`}}>
+                <div style={{flexShrink:0,textAlign:"center",minWidth:44}}>
+                  {e.eventDate?(
+                    <>
+                      <div style={{fontSize:18,fontFamily:"Bebas Neue,sans-serif",color:gigTab==="upcoming"?C.green:C.muted,lineHeight:1}}>
+                        {new Date(e.eventDate).toLocaleString("en-AU",{day:"numeric"})}
+                      </div>
+                      <div style={{fontSize:10,color:C.muted,textTransform:"uppercase",letterSpacing:0.5}}>
+                        {new Date(e.eventDate).toLocaleString("en-AU",{month:"short",year:"2-digit"})}
+                      </div>
+                    </>
+                  ):<span style={{fontSize:18}}>📋</span>}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:13,marginBottom:3}}>{e.subject||e.occasion||"Enquiry"}</div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11,color:C.muted}}>
+                    {e.venue&&<span>📍 {e.venue}</span>}
+                    {e.occasion&&<span>🎉 {e.occasion}</span>}
+                    {e.source&&<span style={{color:C.source==="Gmail"?C.green:C.purple}}>● {e.source}</span>}
+                  </div>
+                  {e.notes&&<div style={{fontSize:11,color:C.muted,marginTop:4,lineHeight:1.5}}>{e.notes.slice(0,120)}{e.notes.length>120?"…":""}</div>}
+                </div>
+                <button onClick={()=>onLinkEnquiry&&onLinkEnquiry(e.id,null)}
+                  title="Unlink from client"
+                  style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:14,padding:"2px 4px",flexShrink:0,opacity:0.5}}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Link enquiry modal */}
+        {showLinkModal&&(
+          <div style={{marginTop:14,borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+            <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:8}}>Select an enquiry to link to {c.name}:</div>
+            <input value={linkSearch} onChange={e=>setLinkSearch(e.target.value)} placeholder="Search by name or subject…" style={{fontSize:12,marginBottom:8}}/>
+            {filtered.length===0?(
+              <div style={{fontSize:12,color:C.muted,padding:"10px 0"}}>No unlinked enquiries found.</div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:220,overflowY:"auto"}}>
+                {filtered.map(e=>(
+                  <div key={e.id} onClick={()=>{onLinkEnquiry&&onLinkEnquiry(e.id,c.id);setShowLinkModal(false);}}
+                    style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:C.surface,borderRadius:8,cursor:"pointer",border:`1px solid ${C.border}`}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600}}>{e.fromName||e.subject||"Enquiry"}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{e.eventDate?fmtD(e.eventDate):"No date"} {e.venue?"· "+e.venue:""} {e.occasion?"· "+e.occasion:""}</div>
+                    </div>
+                    <span style={{fontSize:11,color:C.gold,fontWeight:600}}>+ Link →</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
 
-function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
+function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab,enquiries,onLinkEnquiry}){
   const [view,setView]=useState("list");const [sel,setSel]=useState(null);const [filter,setFilter]=useState("All");
   const [busy,setBusy]=useState(false);
   const blank={name:"",type:"Wedding",phone:"",email:"",abn:"",status:"Lead",eventDate:"",venue:"",notes:"",value:"",paid:"0",source:""};
   const [form,setForm]=useState(blank);
   const filtered=filter==="All"?clients:clients.filter(c=>c.type===filter);
+  const today=new Date();today.setHours(0,0,0,0);
+  const gigCountFor=c=>(enquiries||[]).filter(e=>e.clientId===c.id).length;
+  const upcomingCountFor=c=>(enquiries||[]).filter(e=>e.clientId===c.id&&e.eventDate&&new Date(e.eventDate)>=today).length;
   const save=async()=>{
     if(!form.name)return;
     const record=sel
@@ -866,7 +968,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
   if(view==="detail"&&sel){
     const c=clients.find(x=>x.id===sel.id)||sel;
     const pct=c.value>0?Math.round((c.paid/c.value)*100):0;
-    return <ClientDetail c={c} onEdit={()=>openEdit(c)} onCreateInvoice={()=>createInvoice(c)} onDelete={()=>del(c)} onBack={()=>{setView("list");setSel(null);}}/>;
+    return <ClientDetail c={c} onEdit={()=>openEdit(c)} onCreateInvoice={()=>createInvoice(c)} onDelete={()=>del(c)} onBack={()=>{setView("list");setSel(null);}} allEnquiries={enquiries} onLinkEnquiry={onLinkEnquiry}/>;
   }
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
@@ -891,6 +993,9 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab}){
                     <Badge label={c.type} color={C.purple}/><Badge label={c.status} color={sCol(c.status)}/>
                     {c.source==="Gmail"&&<Badge label="Gmail" color={C.green}/>}
                     {c.eventDate&&<span style={{fontSize:11,color:C.muted}}>{"\uD83D\uDCC5"} {fmtD(c.eventDate)}</span>}
+                    {gigCountFor(c)>0&&<span style={{fontSize:11,background:upcomingCountFor(c)>0?C.green+"22":C.surface,color:upcomingCountFor(c)>0?C.green:C.muted,border:`1px solid ${upcomingCountFor(c)>0?C.green+"55":C.border}`,borderRadius:99,padding:"1px 7px",fontWeight:600}}>
+                      {upcomingCountFor(c)>0?"\uD83D\uDDD3 "+upcomingCountFor(c)+" upcoming":"\u2705 "+gigCountFor(c)+" gig"+(gigCountFor(c)!==1?"s":"")}
+                    </span>}
                   </div>
                 </div>
                 <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
@@ -2349,6 +2454,7 @@ export default function App(){
   const [djs,setDjs]=useState([]);
   const [packages,setPackages]=useState([]);
   const [addons,setAddons]=useState([]);
+  const [enquiries,setEnquiries]=useState([]);
   const [biz,setBiz]=useState(DEFAULT_BIZ);
   const [tab,setTab]=useState("dashboard");
   const [exportStatus,setExportStatus]=useState("");
@@ -2365,8 +2471,8 @@ export default function App(){
   const loadAll=useCallback(async()=>{
     setLoading(true);setDataError("");
     try{
-      const [c,i,d,b,pk,ad]=await Promise.all([listClients(),listInvoices(),listDjs(),getSettings(),listPackages().catch(()=>[]),listAddons().catch(()=>[])]);
-      setClients(c);setInvoices(i);setDjs(d);if(b)setBiz(b);setPackages(pk);setAddons(ad);
+      const [c,i,d,b,pk,ad,eq]=await Promise.all([listClients(),listInvoices(),listDjs(),getSettings(),listPackages().catch(()=>[]),listAddons().catch(()=>[]),listEnquiries().catch(()=>[])]);
+      setClients(c);setInvoices(i);setDjs(d);if(b)setBiz(b);setPackages(pk);setAddons(ad);setEnquiries(eq);
     }catch(e){setDataError(e.message||"Couldn't load your data.");}
     setLoading(false);
   },[]);
@@ -2379,6 +2485,10 @@ export default function App(){
     return saved;
   };
   const onDeleteClient=async id=>{await deleteClient(id);setClients(prev=>prev.filter(x=>x.id!==id));};
+  const onLinkEnquiry=async(enquiryId,clientId)=>{
+    await linkEnquiryToClient(enquiryId,clientId);
+    setEnquiries(prev=>prev.map(e=>String(e.id)===String(enquiryId)?{...e,clientId:clientId||null}:e));
+  };
   const onCreateInvoice=async inv=>{
     const id=nextInvoiceNo(invoices,biz);
     const saved=await saveInvoice({...inv,id,paymentRef:inv.paymentRef||id});
@@ -2458,7 +2568,7 @@ export default function App(){
         ):(
           <>
             {tab==="dashboard"&&<Dashboard clients={clients} invoices={invoices} djs={djs} setTab={setTab}/>}
-            {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab}/>}
+            {tab==="crm"&&<CRM clients={clients} onSaveClient={onSaveClient} onDeleteClient={onDeleteClient} onCreateInvoice={onCreateInvoice} setTab={setTab} enquiries={enquiries} onLinkEnquiry={onLinkEnquiry}/>}
             {tab==="invoices"&&<Invoices clients={clients} invoices={invoices} biz={biz} onSaveInvoice={onSaveInvoice} onDeleteInvoice={onDeleteInvoice} onSetInvoiceStatus={onSetInvoiceStatus}/>}
             {tab==="roster"&&<Roster djs={djs} onSaveDj={onSaveDj} onToggleDj={onToggleDj}/>}
             {tab==="packages"&&<Packages packages={packages} addons={addons} onSavePackage={onSavePackage} onDeletePackage={onDeletePackage} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>}
