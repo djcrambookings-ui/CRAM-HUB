@@ -470,3 +470,37 @@ export async function deleteAddon(id) {
   const { error } = await supabase.from("addons").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ---------------- WEBSITE ENQUIRIES ----------------
+function rowToEnquiry(r) {
+  return {
+    id: String(r.id),
+    source: r.source || "website",
+    subject: r.subject || "",
+    from: r.from_email || "",
+    fromName: r.from_name || "",
+    fromPhone: r.from_phone || "",
+    occasion: r.occasion || "",
+    eventDate: r.event_date || "",
+    venue: r.venue || "",
+    notes: r.notes || "",
+    date: r.received_at || r.created_at || "",
+    unread: r.unread !== false,
+  };
+}
+
+export async function listEnquiries() {
+  assertReady();
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select("*")
+    .order("received_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data || []).map(rowToEnquiry);
+}
+
+export async function markEnquiryRead(id) {
+  assertReady();
+  await supabase.from("enquiries").update({ unread: false }).eq("id", id);
+}

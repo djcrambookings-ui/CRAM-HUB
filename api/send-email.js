@@ -7,6 +7,7 @@
 import nodemailer from "nodemailer";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { LOGO_W_B64, LOGO_B_B64 } from "./_logo.js";
+import { createClient } from "@supabase/supabase-js";
 
 const money = (n) =>
   "$" + Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -160,6 +161,30 @@ async function readBody(req) {
   });
 }
 
+// Save a website enquiry to Supabase (best-effort, non-blocking)
+async function saveEnquiryToDb(lead, subject) {
+  try {
+    const supaUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supaKey = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    if (!supaUrl || !supaKey) return;
+    const db = createClient(supaUrl, supaKey);
+    await db.from("enquiries").insert({
+      source: "website",
+      subject: subject || "",
+      from_name: lead.name || "",
+      from_email: lead.email || "",
+      from_phone: lead.phone || "",
+      occasion: lead.type || "",
+      event_date: lead.eventDate || null,
+      venue: lead.venue || "",
+      notes: lead.notes || "",
+      received_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn("enquiry db save skipped:", e.message);
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
   const user = process.env.GMAIL_USER;
@@ -170,7 +195,7 @@ export default async function handler(req, res) {
   }
   try {
     const body = await readBody(req);
-    const { to, subject, text, html, invoice, biz } = body || {};
+    const { to, subject, text, html, invoice, biz, replyTo, lead } = body || {};
     if (!to) { res.status(400).json({ error: "No recipient email." }); return; }
 
     const attachments = [];
@@ -194,8 +219,52 @@ export default async function handler(req, res) {
     await transporter.sendMail({
       from: ((biz && biz.name) || "C-RAM Entertainment") + " <" + user + ">",
       to, subject: subject || "Invoice", text: text || "", html: finalHtml || undefined,
-      replyTo: user, attachments,
+      replyTo: replyTo || user, attachments,
     });
+
+    // If this is a website enquiry (has a lead + replyTo = client email), also:
+    // 1. Send auto-ack to the client
+    // 2. Save enquiry record to Supabase
+    if (lead && replyTo && replyTo !== user) {
+      // Auto-ack to client (fire-and-forget, don't fail the main response)
+      try {
+        const ackTransporter = nodemailer.createTransport({
+          host: "smtp.gmail.com", port: 465, secure: true, auth: { user, pass },
+        });
+        const firstName = (lead.name || "").split(/\s+/)[0] || "there";
+        const bizName = (biz && biz.name) || "C-RAM Entertainment";
+        const cleanSubject = (subject || "").replace(/^new\s+/i,"").replace(/enquiry\s*[—\-]\s*/i,"").trim();
+        const ackHtml = `
+<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#222;max-width:560px">
+  <p>Hi ${firstName},</p>
+  <p>Thank you for reaching out to <strong>${bizName}</strong>!</p>
+  <p>We've received your enquiry${cleanSubject ? ` regarding <em>"${cleanSubject}"</em>` : ""} and will be in touch shortly to discuss your event in more detail.</p>
+  <p>In the meantime, feel free to check out our packages and services on our website at <a href="https://c-rament.com.au" style="color:#F5C518;text-decoration:none;font-weight:bold">c-rament.com.au</a>.</p>
+  <p>We look forward to making your event an <strong>unforgettable experience</strong>! 🎶</p>
+  <p style="margin-top:20px">Warm regards,<br><strong>Marc</strong><br>
+  <span style="color:#888">${bizName}</span><br>
+  <span style="color:#888;font-size:13px">📱 0432 775 402 &nbsp;·&nbsp; 🌐 <a href="https://c-rament.com.au" style="color:#888">c-rament.com.au</a></span>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin:20px 0"/>
+  <img src="cid:cramlogo" alt="${bizName}" width="150" style="width:150px;max-width:60%;height:auto;display:block"/>
+</div>`;
+        const { LOGO_B_B64: logoB } = await import("./_logo.js");
+        await ackTransporter.sendMail({
+          from: `Marc @ ${bizName} <${user}>`,
+          to: replyTo,
+          subject: `Thanks for your enquiry${cleanSubject ? ` — ${cleanSubject}` : ""} | ${bizName}`,
+          text: `Hi ${firstName},\n\nThank you for reaching out to ${bizName}!\n\nWe've received your enquiry${cleanSubject ? ` regarding "${cleanSubject}"` : ""} and will be in touch shortly.\n\nWarm regards,\nMarc\n${bizName}\n📱 0432 775 402\n🌐 c-rament.com.au`,
+          html: ackHtml,
+          replyTo: user,
+          attachments: [{ filename: "cram-logo.png", content: Buffer.from(logoB, "base64"), contentType: "image/png", cid: "cramlogo" }],
+        });
+      } catch (ackErr) {
+        console.warn("auto-ack failed:", ackErr.message);
+      }
+      // Save to Supabase (fire-and-forget)
+      saveEnquiryToDb(lead, subject);
+    }
+
     res.status(200).json({ ok: true, attached: attachments.length > 0 });
   } catch (e) {
     res.status(500).json({ error: (e && e.message) || "Send failed" });

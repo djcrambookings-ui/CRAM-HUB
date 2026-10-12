@@ -7,6 +7,7 @@ import {
   getSettings, saveSettings,
   listPackages, savePackage, deletePackage,
   listAddons, saveAddon, deleteAddon,
+  listEnquiries, markEnquiryRead,
 } from "./db";
 
 // One-shot hand-off used to deep-link an invoice from the CRM tab to the Invoices tab.
@@ -1628,33 +1629,61 @@ function Enquiries({biz}){
   async function fetchThreads(){
     setLoading(true);setErr(null);
     try{
-      // We'll call a lightweight API route that queries Gmail
-      const res=await fetch("/api/gmail-enquiries");
-      if(res.status===404){
-        // API not set up yet — show setup instructions
-        setErr("setup");setLoading(false);return;
-      }
-      if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||"Failed to fetch");}
-      const data=await res.json();
-      setThreads(data.threads||[]);
+      // Fetch Gmail IMAP threads and Supabase website enquiries in parallel
+      const [imapRes,dbEnquiries]=await Promise.allSettled([
+        fetch("/api/gmail-enquiries").then(r=>{
+          if(r.status===404)return{threads:[]};
+          return r.json();
+        }),
+        listEnquiries().catch(()=>[]),
+      ]);
+
+      const imapThreads=(imapRes.status==="fulfilled"?imapRes.value?.threads||[]:[]);
+      const webEnquiries=(dbEnquiries.status==="fulfilled"?dbEnquiries.value||[]:[]);
+
+      // Tag each source
+      const tagged=[
+        ...imapThreads.map(t=>({...t,_source:"gmail"})),
+        ...webEnquiries.map(t=>({...t,_source:"website",id:"web-"+t.id})),
+      ];
+
+      // Deduplicate by from+date proximity (website enquiry might also appear in Gmail)
+      const seen=new Set();
+      const merged=tagged.filter(t=>{
+        const key=t.from?.toLowerCase()+"|"+new Date(t.date).toDateString();
+        if(seen.has(key))return false;
+        seen.add(key);return true;
+      });
+
+      // Sort newest first
+      merged.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      setThreads(merged);
     }catch(e){
-      if(e.message==="Failed to fetch"||e.message.includes("NetworkError")){
-        setErr("setup");
-      }else{
-        setErr(e.message);
-      }
+      setErr(e.message);
     }finally{setLoading(false);}
   }
 
   async function loadDetail(thread){
     setSelected(thread);setDetail(null);setSendStatus(null);setReply("");
+    // Website enquiries: build detail from the stored data directly
+    if(thread._source==="website"){
+      if(thread.unread){markEnquiryRead(thread.id.replace("web-","")).catch(()=>{});}
+      const lines=[
+        thread.occasion&&`Occasion: ${thread.occasion}`,
+        thread.eventDate&&`Event date: ${thread.eventDate}`,
+        thread.venue&&`Venue / Location: ${thread.venue}`,
+        thread.fromPhone&&`Phone: ${thread.fromPhone}`,
+        thread.notes&&`\n${thread.notes}`,
+      ].filter(Boolean).join("\n");
+      setDetail({messages:[{from:thread.from,fromName:thread.fromName,date:thread.date,body:lines||"(no details)"}]});
+      return;
+    }
     setLoadingDetail(true);
     try{
       const res=await fetch(`/api/gmail-enquiries/${thread.id}`);
       if(!res.ok)throw new Error("Could not load thread");
       const d=await res.json();
       setDetail(d);
-      // Pre-fill reply with a blank slate
       setReply("");
     }catch(e){setDetail({error:e.message});}
     finally{setLoadingDetail(false);}
@@ -1779,8 +1808,11 @@ function Enquiries({biz}){
               <div style={{fontWeight:t.unread?700:600,fontSize:13,color:C.text,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.subject||"(no subject)"}</div>
               <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",marginLeft:8}}>{timeAgo(t.date)}</div>
             </div>
-            <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{t.fromName||t.from}</div>
-            <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.snippet}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+              <div style={{fontSize:11,color:C.muted}}>{t.fromName||t.from}</div>
+              {t._source==="website"&&<span style={{fontSize:9,fontWeight:700,background:C.gold,color:"#111",borderRadius:3,padding:"1px 5px",letterSpacing:0.5}}>WEBSITE</span>}
+            </div>
+            {t.snippet&&<div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.snippet}</div>}
             {ackStatus[t.id]==="sent"&&<div style={{marginTop:4,fontSize:10,color:C.green}}>✓ Acknowledgement sent</div>}
           </div>
         ))}
@@ -1922,7 +1954,13 @@ ${form.message}`;
       const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: biz.email, subject: `New ${form.occasion} enquiry \u2014 ${form.name}`, text: buildText(), replyTo: form.email }),
+        body: JSON.stringify({
+          to: biz.email,
+          subject: `New ${form.occasion} enquiry \u2014 ${form.name}`,
+          text: buildText(),
+          replyTo: form.email,
+          lead,
+        }),
       });
       if (res.status === 404) {
         onSubmitLead && onSubmitLead(lead);   // no backend (e.g. preview): still capture the lead so the flow is visible
