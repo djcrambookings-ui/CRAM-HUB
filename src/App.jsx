@@ -985,7 +985,7 @@ function CRM({clients,onSaveClient,onDeleteClient,onCreateInvoice,setTab,enquiri
         ))}
       </div>
       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-        {[{k:"All",l:"All Statuses"},{k:"leads",l:"🔥 Active Leads"},{k:"Confirmed",l:"✅ Confirmed"},{k:"Completed",l:"✓ Completed"}].map(s=>(
+        {[{k:"All",l:"All Statuses"},{k:"leads",l:"Active Leads"},{k:"Confirmed",l:"Confirmed"},{k:"Completed",l:"Completed"}].map(s=>(
           <button key={s.k} onClick={()=>setStatusFilter(s.k)} style={{background:statusFilter===s.k?C.coral:C.surface,color:statusFilter===s.k?"#fff":C.muted,border:`1px solid ${statusFilter===s.k?C.coral:C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>{s.l}</button>
         ))}
         {statusFilter!=="All"&&<button onClick={()=>setStatusFilter("All")} style={{background:"transparent",color:C.muted,border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer"}}>✕ Clear</button>}
@@ -1349,7 +1349,7 @@ function Roster({djs,onSaveDj,onToggleDj,onDeleteDj}){
                   <div style={{display:"flex",gap:5}}>
                     <button onClick={()=>onToggleDj(dj)} style={{background:dj.available?C.coral+"22":C.green+"22",color:dj.available?C.coral:C.green,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>{dj.available?"Busy":"Free"}</button>
                     <button onClick={()=>startEdit(dj)} style={{background:C.gold+"22",color:C.gold,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>{"\u270F"}{"\uFE0F"} Edit</button>
-                    <button onClick={()=>del(dj)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>\uD83D\uDDD1 Delete</button>
+                    <button onClick={()=>del(dj)} style={{background:C.coral+"22",color:C.coral,border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>Delete</button>
                   </div>
                 </div>
               </>
