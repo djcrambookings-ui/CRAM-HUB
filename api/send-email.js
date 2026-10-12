@@ -261,6 +261,39 @@ export default async function handler(req, res) {
       } catch (ackErr) {
         console.warn("auto-ack failed:", ackErr.message);
       }
+
+      // Notify Marc — new enquiry alert to the business inbox
+      try {
+        const notifyTransporter = nodemailer.createTransport({
+          host: "smtp.gmail.com", port: 465, secure: true, auth: { user, pass },
+        });
+        const bizName = (biz && biz.name) || "C-RAM Entertainment";
+        const cleanSubject = (subject || "").replace(/^new\s+/i,"").replace(/enquiry\s*[—\-]\s*/i,"").trim();
+        const notifyHtml = `
+<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#222;max-width:560px">
+  <h2 style="color:#F5C518;margin-top:0">🎉 New Website Enquiry!</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr><td style="padding:6px 0;font-weight:bold;width:120px;color:#555">Name</td><td style="padding:6px 0">${lead.name || "—"}</td></tr>
+    <tr style="background:#f9f9f9"><td style="padding:6px 0;font-weight:bold;color:#555">Email</td><td style="padding:6px 0"><a href="mailto:${lead.email || ""}">${lead.email || "—"}</a></td></tr>
+    <tr><td style="padding:6px 0;font-weight:bold;color:#555">Phone</td><td style="padding:6px 0">${lead.phone || "—"}</td></tr>
+    <tr style="background:#f9f9f9"><td style="padding:6px 0;font-weight:bold;color:#555">Occasion</td><td style="padding:6px 0">${lead.type || "—"}</td></tr>
+    <tr><td style="padding:6px 0;font-weight:bold;color:#555">Event Date</td><td style="padding:6px 0">${lead.eventDate || "—"}</td></tr>
+    <tr style="background:#f9f9f9"><td style="padding:6px 0;font-weight:bold;color:#555">Venue</td><td style="padding:6px 0">${lead.venue || "—"}</td></tr>
+    ${lead.notes ? `<tr><td style="padding:6px 0;font-weight:bold;color:#555">Message</td><td style="padding:6px 0">${lead.notes}</td></tr>` : ""}
+  </table>
+  <p style="margin-top:16px;font-size:12px;color:#888">This enquiry was submitted via the ${bizName} website contact form and an auto-acknowledgement has been sent to the client.</p>
+</div>`;
+        await notifyTransporter.sendMail({
+          from: `${bizName} Website <${user}>`,
+          to: user,
+          subject: `🎉 New enquiry from ${lead.name || "your website"}${cleanSubject ? ` — ${cleanSubject}` : ""}`,
+          text: `New website enquiry!\n\nName: ${lead.name || "—"}\nEmail: ${lead.email || "—"}\nPhone: ${lead.phone || "—"}\nOccasion: ${lead.type || "—"}\nEvent Date: ${lead.eventDate || "—"}\nVenue: ${lead.venue || "—"}\nMessage: ${lead.notes || "—"}\n\nAn auto-acknowledgement has been sent to the client.`,
+          html: notifyHtml,
+        });
+      } catch (notifyErr) {
+        console.warn("notify email failed:", notifyErr.message);
+      }
+
       // Save to Supabase (fire-and-forget)
       saveEnquiryToDb(lead, subject);
     }
