@@ -116,6 +116,7 @@ function rowToInvoice(r, items) {
     notes: r.notes || "",
     paymentRef: r.payment_ref || "",
     paidDate: r.paid_date || "",
+    includeGST: r.include_gst !== false,
     items: (items || []).map((it) => ({
       catalogueLabel: it.catalogue_label || "",
       desc: it.descr || "",
@@ -138,6 +139,7 @@ function invoiceToRow(inv) {
     notes: inv.notes || "",
     payment_ref: inv.paymentRef || "",
     paid_date: dateOrNull(inv.paidDate),
+    include_gst: inv.includeGST !== false,
   };
 }
 
