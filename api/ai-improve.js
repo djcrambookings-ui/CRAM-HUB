@@ -1,6 +1,6 @@
 // AI text improvement — tries providers in order of preference:
 //   1. Anthropic (ANTHROPIC_API_KEY)   — best quality, paid
-//   2. Groq     (GROQ_API_KEY)         — free tier, fast (Llama 3)
+//   2. Groq     (GROQ_API_KEY)         — free tier, fast (Llama 3 70b)
 //   3. Fallback — returns original text with a note
 //
 // POST body: { text, instruction }
@@ -15,9 +15,32 @@ async function readBody(req) {
   });
 }
 
-const SYSTEM_PROMPT = `You are a professional email assistant for C-RAM Entertainment, a Melbourne DJ and events business run by Marc. Your job is to improve email replies so they sound warm, professional, and confident — like they came from an experienced events business owner. Always fix ALL spelling mistakes and grammatical errors, no matter what other instruction is given. Return ONLY the improved text itself — no explanations, no "Here is the improved version:", no quotes. Just the improved email text ready to send.`;
+// Marc's voice profile — used in all prompts so every output sounds like him
+const MARC_VOICE = `
+You are writing AS Marc from C-RAM Entertainment — a Melbourne DJ with 25 years experience who runs a professional wedding and events business.
 
-async function tryAnthropic(apiKey, text, instruction) {
+Marc's natural writing style:
+- Warm and genuine, not corporate or stiff
+- Confident but not arrogant — he knows his craft
+- Casual-professional: friendly like a mate, but clearly experienced
+- Short punchy sentences. Gets to the point.
+- Uses "I'd love to" / "happy to" / "let's" naturally
+- Mentions the client's event specifically when context is given
+- Never sounds like a template or AI-generated copy
+- Signs off simply — no "Kind regards" or "Best wishes", just a natural close
+- Always fix ALL spelling and grammar mistakes
+
+Never use phrases like: "I hope this email finds you well", "Please don't hesitate", "at your earliest convenience", "I wanted to reach out", "touch base", "moving forward", "as per my last email".
+These sound robotic. Marc sounds like a real person who loves what he does.
+`;
+
+const SYSTEM_PROMPT = `${MARC_VOICE}
+Your job: improve or rewrite email text so it sounds exactly like Marc wrote it himself — warm, professional, genuine. Return ONLY the finished email text, nothing else. No explanations, no "Here is the improved version:", no quotes.`;
+
+const WRITE_FROM_NOTES_PROMPT = `${MARC_VOICE}
+Your job: take rough notes or dot points and write a complete, natural-sounding email reply FROM Marc to a client. The email should sound like Marc sat down and typed it — not like it was generated. Return ONLY the finished email text, nothing else. No subject line unless asked. No explanations.`;
+
+async function callAnthropic(apiKey, systemPrompt, userMessage) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -28,16 +51,16 @@ async function tryAnthropic(apiKey, text, instruction) {
     body: JSON.stringify({
       model: "claude-haiku-20240307",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `${instruction}.\n\nOriginal text:\n${text}` }],
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
     }),
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Anthropic ${res.status}`); }
   const data = await res.json();
-  return data.content?.[0]?.text?.trim() || text;
+  return data.content?.[0]?.text?.trim();
 }
 
-async function tryGroq(apiKey, text, instruction) {
+async function callGroq(apiKey, systemPrompt, userMessage) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -48,15 +71,36 @@ async function tryGroq(apiKey, text, instruction) {
       model: "llama-3.3-70b-versatile",
       max_tokens: 1024,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `${instruction}.\n\nOriginal text:\n${text}` },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
       ],
     }),
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `Groq ${res.status}`); }
   const data = await res.json();
-  return data.choices?.[0]?.message?.content?.trim() || text;
+  return data.choices?.[0]?.message?.content?.trim();
 }
+
+// Detailed instructions for each dropdown option
+const INSTRUCTION_MAP = {
+  "correct grammar and rephrase professionally":
+    "Fix ALL spelling and grammar mistakes. Rephrase so it flows naturally in Marc's voice — confident and professional but still him. Same meaning, same approximate length.",
+
+  "make more friendly and warm":
+    "Fix ALL spelling and grammar mistakes. Rewrite so it sounds genuinely warm and personal — like Marc really cares about this client's day. Keep it natural and real, not gushing.",
+
+  "make more formal and concise":
+    "Fix ALL spelling and grammar mistakes. Tighten it right up — cut any waffle, filler or casual phrases. Make every sentence earn its place. Still Marc's voice, just sharper and more professional.",
+
+  "expand with more detail":
+    "Fix ALL spelling and grammar mistakes. Expand this significantly — add reassurance, explain what happens next, show Marc's experience and enthusiasm for the event. Should feel thorough and confidence-building for the client. At least double the length.",
+
+  "shorten and tighten":
+    "Fix ALL spelling and grammar mistakes. Cut this down hard. Strip out anything repeated or unnecessary. Keep only the core message in clear, direct sentences.",
+
+  "write from notes":
+    "Take these rough notes and write a complete, natural email reply from Marc. Make it flow like a real email he'd actually send — warm, confident, professional. Fill in the gaps sensibly based on context.",
+};
 
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "Method not allowed" }); return; }
@@ -65,21 +109,18 @@ export default async function handler(req, res) {
     const { text, instruction = "correct grammar and rephrase professionally" } = await readBody(req);
     if (!text) { res.status(400).json({ error: "Missing text" }); return; }
 
-    // Map short dropdown values to detailed AI instructions
-    const instructionMap = {
-      "correct grammar and rephrase professionally": "Fix ALL spelling mistakes and grammatical errors, then rephrase the text so it reads professionally and confidently. Keep the same meaning and length.",
-      "make more friendly and warm": "Fix ALL spelling mistakes, then rewrite the text to sound warm, friendly and personable — like you genuinely care about the client's event. Keep it natural, not overly formal.",
-      "make more formal and concise": "Fix ALL spelling mistakes, then rewrite the text to be more formal, polished and concise. Remove casual language, filler phrases and unnecessary words. Every sentence should count.",
-      "expand with more detail": "Fix ALL spelling mistakes, then significantly expand the text with helpful, relevant detail. Add context, explain next steps more clearly, and make the response feel thorough and reassuring to a wedding or events client. At least double the length.",
-      "shorten and tighten": "Fix ALL spelling mistakes, then shorten the text significantly. Cut anything repetitive or unnecessary. Keep only the essential points in clear, direct language.",
-    };
-    const detailedInstruction = instructionMap[instruction.toLowerCase().trim()] || `Fix ALL spelling mistakes, then ${instruction}.`;
+    const isWriteFromNotes = instruction.toLowerCase().trim() === "write from notes";
+    const systemPrompt = isWriteFromNotes ? WRITE_FROM_NOTES_PROMPT : SYSTEM_PROMPT;
+    const detailedInstruction = INSTRUCTION_MAP[instruction.toLowerCase().trim()] || `Fix ALL spelling mistakes, then ${instruction}.`;
+    const userMessage = isWriteFromNotes
+      ? `Write a complete email from these notes:\n\n${text}`
+      : `${detailedInstruction}\n\nEmail text:\n${text}`;
 
     // Try Anthropic first (paid, best quality)
     if (process.env.ANTHROPIC_API_KEY) {
       try {
-        const improved = await tryAnthropic(process.env.ANTHROPIC_API_KEY, text, detailedInstruction);
-        res.status(200).json({ improved, provider: "anthropic" });
+        const improved = await callAnthropic(process.env.ANTHROPIC_API_KEY, systemPrompt, userMessage);
+        res.status(200).json({ improved: improved || text, provider: "anthropic" });
         return;
       } catch (e) { console.warn("Anthropic failed, trying Groq:", e.message); }
     }
@@ -87,8 +128,8 @@ export default async function handler(req, res) {
     // Try Groq (free tier)
     if (process.env.GROQ_API_KEY) {
       try {
-        const improved = await tryGroq(process.env.GROQ_API_KEY, text, detailedInstruction);
-        res.status(200).json({ improved, provider: "groq" });
+        const improved = await callGroq(process.env.GROQ_API_KEY, systemPrompt, userMessage);
+        res.status(200).json({ improved: improved || text, provider: "groq" });
         return;
       } catch (e) { console.warn("Groq failed:", e.message); }
     }

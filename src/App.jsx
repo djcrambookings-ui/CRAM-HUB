@@ -775,10 +775,11 @@ function ClientDetail({c,onEdit,onCreateInvoice,onDelete,onBack}){
               <option value="make more formal and concise">Make more formal & concise</option>
               <option value="expand with more detail">Expand with more detail</option>
               <option value="shorten and tighten">Shorten & tighten</option>
+              <option value="write from notes">✍️ Write email from my notes</option>
             </select>
             <button onClick={aiImprove} disabled={aiLoading||!body.trim()}
               style={{background:C.purple,color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",opacity:(!body.trim()||aiLoading)?0.5:1}}>
-              {aiLoading?"Improving…":"✨ Improve"}
+              {aiLoading?"Improving…":aiPrompt==="write from notes"?"✍️ Write Email":"✨ Improve"}
             </button>
           </div>
           {/* Send */}
@@ -1364,10 +1365,11 @@ function Specials({clients, biz}){
             <option value="make more formal and concise">Make more formal &amp; concise</option>
             <option value="expand with more detail">Expand with more detail</option>
             <option value="shorten and tighten">Shorten &amp; tighten</option>
+            <option value="write from notes">✍️ Write email from my notes</option>
           </select>
           <button onClick={aiImprove} disabled={aiLoading||!body.trim()}
             style={{background:C.purple,color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:aiLoading||!body.trim()?"default":"pointer",opacity:(aiLoading||!body.trim())?0.5:1,whiteSpace:"nowrap"}}>
-            {aiLoading?"Improving…":"✨ Improve"}
+            {aiLoading?"Improving…":aiPrompt==="write from notes"?"✍️ Write Email":"✨ Improve"}
           </button>
         </div>
         <p style={{fontSize:11,color:C.dim,marginTop:6}}>Tip: type <b style={{color:C.muted}}>{"{name}"}</b> and the "one private email each" option below will swap in each person's first name. (The Gmail/BCC option sends one shared message, so it can't personalise.)</p>
@@ -1907,10 +1909,11 @@ function Enquiries({biz}){
                   <option value="make more formal and concise">Make more formal & concise</option>
                   <option value="expand with more detail">Expand with more detail</option>
                   <option value="shorten and tighten">Shorten & tighten</option>
+                  <option value="write from notes">✍️ Write email from my notes</option>
                 </select>
                 <button onClick={aiImprove} disabled={aiLoading||!reply.trim()}
                   style={{background:C.purple,color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>
-                  {aiLoading?"Improving…":"✨ Improve"}
+                  {aiLoading?"Improving…":aiPrompt==="write from notes"?"✍️ Write Email":"✨ Improve"}
                 </button>
               </div>
               {/* Send row */}
