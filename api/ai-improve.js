@@ -65,10 +65,20 @@ export default async function handler(req, res) {
     const { text, instruction = "correct grammar and rephrase professionally" } = await readBody(req);
     if (!text) { res.status(400).json({ error: "Missing text" }); return; }
 
+    // Map short dropdown values to detailed AI instructions
+    const instructionMap = {
+      "correct grammar and rephrase professionally": "Fix ALL spelling mistakes and grammatical errors, then rephrase the text so it reads professionally and confidently. Keep the same meaning and length.",
+      "make more friendly and warm": "Fix ALL spelling mistakes, then rewrite the text to sound warm, friendly and personable — like you genuinely care about the client's event. Keep it natural, not overly formal.",
+      "make more formal and concise": "Fix ALL spelling mistakes, then rewrite the text to be more formal, polished and concise. Remove casual language, filler phrases and unnecessary words. Every sentence should count.",
+      "expand with more detail": "Fix ALL spelling mistakes, then significantly expand the text with helpful, relevant detail. Add context, explain next steps more clearly, and make the response feel thorough and reassuring to a wedding or events client. At least double the length.",
+      "shorten and tighten": "Fix ALL spelling mistakes, then shorten the text significantly. Cut anything repetitive or unnecessary. Keep only the essential points in clear, direct language.",
+    };
+    const detailedInstruction = instructionMap[instruction.toLowerCase().trim()] || `Fix ALL spelling mistakes, then ${instruction}.`;
+
     // Try Anthropic first (paid, best quality)
     if (process.env.ANTHROPIC_API_KEY) {
       try {
-        const improved = await tryAnthropic(process.env.ANTHROPIC_API_KEY, text, instruction);
+        const improved = await tryAnthropic(process.env.ANTHROPIC_API_KEY, text, detailedInstruction);
         res.status(200).json({ improved, provider: "anthropic" });
         return;
       } catch (e) { console.warn("Anthropic failed, trying Groq:", e.message); }
@@ -77,7 +87,7 @@ export default async function handler(req, res) {
     // Try Groq (free tier)
     if (process.env.GROQ_API_KEY) {
       try {
-        const improved = await tryGroq(process.env.GROQ_API_KEY, text, instruction);
+        const improved = await tryGroq(process.env.GROQ_API_KEY, text, detailedInstruction);
         res.status(200).json({ improved, provider: "groq" });
         return;
       } catch (e) { console.warn("Groq failed:", e.message); }
