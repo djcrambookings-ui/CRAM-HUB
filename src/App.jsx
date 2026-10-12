@@ -948,8 +948,8 @@ function Invoices({clients,invoices,biz,onSaveInvoice,onDeleteInvoice,onSetInvoi
     </div>
   );
 
-  const totalPaid=invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
-  const totalOwing=invoices.filter(i=>i.status!=="Paid").reduce((s,i)=>s+i.items.reduce((a,x)=>a+(Number(x.qty)*Number(x.rate)||0),0)*1.1,0);
+  const totalPaid=invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+invTotal(i),0);
+  const totalOwing=invoices.filter(i=>i.status!=="Paid").reduce((s,i)=>s+invTotal(i),0);
   return(
     <div style={{animation:"slideIn 0.3s ease"}}>
       {sending&&<SendModal inv={sending} biz={biz} onClose={()=>setSending(null)} onSent={()=>{onSetInvoiceStatus(sending,"Sent");setSending(null);}}/>}
