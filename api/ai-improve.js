@@ -15,7 +15,7 @@ async function readBody(req) {
   });
 }
 
-const SYSTEM_PROMPT = `You are a professional email assistant for C-RAM Entertainment, a Melbourne DJ and events business run by Marc. Your job is to improve email replies so they sound warm, professional, and confident — like they came from an experienced events business owner. Return ONLY the improved text itself — no explanations, no "Here is the improved version:", no quotes. Just the improved email text ready to send.`;
+const SYSTEM_PROMPT = `You are a professional email assistant for C-RAM Entertainment, a Melbourne DJ and events business run by Marc. Your job is to improve email replies so they sound warm, professional, and confident — like they came from an experienced events business owner. Always fix ALL spelling mistakes and grammatical errors, no matter what other instruction is given. Return ONLY the improved text itself — no explanations, no "Here is the improved version:", no quotes. Just the improved email text ready to send.`;
 
 async function tryAnthropic(apiKey, text, instruction) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -45,7 +45,7 @@ async function tryGroq(apiKey, text, instruction) {
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "llama3-8b-8192",
+      model: "llama-3.3-70b-versatile",
       max_tokens: 1024,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
