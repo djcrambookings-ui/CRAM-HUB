@@ -1695,7 +1695,7 @@ function Enquiries({biz}){
       const res=await fetch("/api/gmail-ack",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({to:thread.from,name:thread.fromName||"",bizName:biz?.name||"C-RAM Entertainment",subject:"Re: "+thread.subject})
+        body:JSON.stringify({to:thread.from,name:thread.fromName||"",bizName:biz?.name||"C-RAM Entertainment",subject:thread.subject||""})
       });
       if(!res.ok)throw new Error("Ack failed");
       setAckStatus(prev=>({...prev,[thread.id]:"sent"}));

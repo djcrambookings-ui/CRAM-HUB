@@ -26,28 +26,37 @@ export default async function handler(req, res) {
     if (!to) { res.status(400).json({ error: "Missing recipient" }); return; }
 
     const firstName = (name || "").split(/\s+/)[0] || "there";
+    // Strip "Re:", "Fwd:" etc from the original subject to get the clean topic
+    const cleanSubject = subject.replace(/^(re|fwd?):\s*/i, "").trim();
+    const subjectRef = cleanSubject ? `regarding "<em>${cleanSubject}</em>"` : "about your upcoming event";
 
     const textBody = `Hi ${firstName},
 
-Thank you for reaching out to ${bizName}!
+Great news — your enquiry has landed safely in our inbox and we're already excited about it!
 
-We've received your enquiry and will be in touch shortly to discuss your event in more detail.
+We've received your message ${cleanSubject ? `regarding "${cleanSubject}"` : "about your upcoming event"} and Marc will personally be in touch shortly to chat through all the details.
 
-In the meantime, feel free to check out our packages and services on our website.
+In the meantime, feel free to have a browse of our packages at c-rament.com.au — and if you think of anything else you'd like to add, just hit reply.
 
-We look forward to making your event an unforgettable experience! 🎶
+We can't wait to get the party started! 🎶🕺
 
 Warm regards,
-The ${bizName} Team`;
+Marc
+C-RAM Entertainment
+📱 0432 775 402
+🌐 c-rament.com.au`;
 
     const htmlBody = `
-<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#222;max-width:560px">
+<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.8;color:#222;max-width:560px">
   <p>Hi ${firstName},</p>
-  <p>Thank you for reaching out to <strong>${bizName}</strong>!</p>
-  <p>We've received your enquiry and will be in touch shortly to discuss your event in more detail.</p>
-  <p>In the meantime, feel free to check out our packages and services on our website.</p>
-  <p>We look forward to making your event an <strong>unforgettable experience</strong>! 🎶</p>
-  <p>Warm regards,<br><strong>The ${bizName} Team</strong></p>
+  <p>Great news — your enquiry has landed safely in our inbox and we're already excited about it! 🎉</p>
+  <p>We've received your message ${subjectRef} and <strong>Marc will personally be in touch shortly</strong> to chat through all the details.</p>
+  <p>In the meantime, feel free to have a browse of our packages at <a href="https://c-rament.com.au" style="color:#F5C518;text-decoration:none;font-weight:bold">c-rament.com.au</a> — and if you think of anything else you'd like to add, just hit reply.</p>
+  <p>We can't wait to get the party started! 🎶🕺</p>
+  <p style="margin-top:20px">Warm regards,<br><strong>Marc</strong><br>
+  <span style="color:#888">C-RAM Entertainment</span><br>
+  <span style="color:#888;font-size:13px">📱 0432 775 402 &nbsp;·&nbsp; 🌐 <a href="https://c-rament.com.au" style="color:#888">c-rament.com.au</a></span>
+  </p>
   <hr style="border:none;border-top:1px solid #eee;margin:20px 0"/>
   <img src="cid:cramlogo" alt="${bizName}" width="150" style="width:150px;max-width:60%;height:auto;display:block"/>
 </div>`;
@@ -57,9 +66,9 @@ The ${bizName} Team`;
     });
 
     await transporter.sendMail({
-      from: `${bizName} <${user}>`,
+      from: `Marc @ C-RAM Entertainment <${user}>`,
       to,
-      subject: `Thanks for your enquiry — ${bizName}`,
+      subject: `Got your enquiry${cleanSubject ? ` — ${cleanSubject}` : ""} 🎶`,
       text: textBody,
       html: htmlBody,
       replyTo: user,
