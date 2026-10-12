@@ -112,7 +112,7 @@ const CONTENT={
   corporate:[{type:"LinkedIn Pitch",platform:"LinkedIn",content:"Corporate events deserve more than a Spotify playlist.\n\nC-RAM Entertainment for product launches, end-of-year celebrations, gala dinners and brand activations.\n\nDM or visit c-rament.com.au"}],
   festivals:[{type:"Instagram Caption",platform:"Instagram",content:"Festival season is alive.\n\nNothing hits like an open air set when the crowd locks in.\nThis is where the MUCKIN magic happens.\n\nEnquire: c-rament.com.au\n\n#MelbourneDJ #FestivalDJ #OpenFormat #DJCRam"}],
 };
-const NAV=[{id:"dashboard",label:"Dashboard",icon:"\u26A1"},{id:"crm",label:"CRM",icon:"\uD83D\uDC65"},{id:"invoices",label:"Invoices",icon:"\uD83E\uDDFE"},{id:"calendar",label:"Calendar",icon:"\uD83D\uDCC5"},{id:"roster",label:"DJ Roster",icon:"\uD83C\uDFA7"},{id:"packages",label:"Packages",icon:"\uD83C\uDFB6"},{id:"specials",label:"Specials",icon:"\u2709\uFE0F"},{id:"settings",label:"Settings",icon:"\u2699\uFE0F"},{id:"getintouch",label:"Get in Touch",icon:"\uD83D\uDCEC"}];
+const NAV=[{id:"dashboard",label:"Dashboard",icon:"\u26A1"},{id:"crm",label:"CRM",icon:"\uD83D\uDC65"},{id:"invoices",label:"Invoices",icon:"\uD83E\uDDFE"},{id:"calendar",label:"Calendar",icon:"\uD83D\uDCC5"},{id:"roster",label:"DJ Roster",icon:"\uD83C\uDFA7"},{id:"packages",label:"Packages",icon:"\uD83C\uDFB6"},{id:"specials",label:"Specials",icon:"\u2709\uFE0F"},{id:"enquiries",label:"Enquiries",icon:"\uD83D\uDCE8"},{id:"settings",label:"Settings",icon:"\u2699\uFE0F"},{id:"getintouch",label:"Get in Touch",icon:"\uD83D\uDCEC"}];
 
 // -- LINE ITEM ROW -------------------------------------------------
 function LineItemRow({item,idx,onChange,onRemove}){
@@ -1505,6 +1505,288 @@ function AddonsEditor({addons,onSaveAddon,onDeleteAddon}){
   );
 }
 
+// -- ENQUIRIES (Gmail inbox for client enquiries with AI-assisted replies) ---
+const ENQUIRY_KEYWORDS = ["enquiry","enquire","booking","book","event","dj","wedding","birthday","corporate","party","hire","available","quote","price","package"];
+function isLikelyEnquiry(subject="",snippet="") {
+  const txt=(subject+" "+snippet).toLowerCase();
+  return ENQUIRY_KEYWORDS.some(k=>txt.includes(k));
+}
+function timeAgo(dateStr){
+  if(!dateStr)return"";
+  const d=new Date(dateStr);const now=new Date();
+  const diff=Math.floor((now-d)/1000);
+  if(diff<60)return"just now";
+  if(diff<3600)return Math.floor(diff/60)+"m ago";
+  if(diff<86400)return Math.floor(diff/3600)+"h ago";
+  if(diff<604800)return Math.floor(diff/86400)+"d ago";
+  return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"});
+}
+
+function Enquiries({biz}){
+  const [threads,setThreads]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [err,setErr]=useState(null);
+  const [selected,setSelected]=useState(null); // full thread detail
+  const [detail,setDetail]=useState(null);
+  const [loadingDetail,setLoadingDetail]=useState(false);
+  const [reply,setReply]=useState("");
+  const [aiPrompt,setAiPrompt]=useState("correct grammar and rephrase professionally");
+  const [aiLoading,setAiLoading]=useState(false);
+  const [sending,setSending]=useState(false);
+  const [sendStatus,setSendStatus]=useState(null); // "sent" | "error" | null
+  const [ackLoading,setAckLoading]=useState(false);
+  const [ackStatus,setAckStatus]=useState({}); // threadId -> "sent"|"error"
+
+  // Fetch enquiry threads from Gmail via server-side endpoint
+  // Falls back to showing a setup message if the endpoint isn't available
+  useEffect(()=>{
+    fetchThreads();
+  },[]);
+
+  async function fetchThreads(){
+    setLoading(true);setErr(null);
+    try{
+      // We'll call a lightweight API route that queries Gmail
+      const res=await fetch("/api/gmail-enquiries");
+      if(res.status===404){
+        // API not set up yet — show setup instructions
+        setErr("setup");setLoading(false);return;
+      }
+      if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||"Failed to fetch");}
+      const data=await res.json();
+      setThreads(data.threads||[]);
+    }catch(e){
+      if(e.message==="Failed to fetch"||e.message.includes("NetworkError")){
+        setErr("setup");
+      }else{
+        setErr(e.message);
+      }
+    }finally{setLoading(false);}
+  }
+
+  async function loadDetail(thread){
+    setSelected(thread);setDetail(null);setSendStatus(null);setReply("");
+    setLoadingDetail(true);
+    try{
+      const res=await fetch(`/api/gmail-enquiries/${thread.id}`);
+      if(!res.ok)throw new Error("Could not load thread");
+      const d=await res.json();
+      setDetail(d);
+      // Pre-fill reply with a blank slate
+      setReply("");
+    }catch(e){setDetail({error:e.message});}
+    finally{setLoadingDetail(false);}
+  }
+
+  async function aiImprove(){
+    if(!reply.trim())return;
+    setAiLoading(true);
+    try{
+      const res=await fetch("/api/ai-improve",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({text:reply,instruction:aiPrompt})
+      });
+      if(!res.ok)throw new Error("AI improve failed");
+      const d=await res.json();
+      setReply(d.improved||reply);
+    }catch(e){alert("AI improve error: "+e.message);}
+    finally{setAiLoading(false);}
+  }
+
+  async function sendReply(){
+    if(!reply.trim()||!selected)return;
+    setSending(true);setSendStatus(null);
+    try{
+      const res=await fetch("/api/gmail-reply",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({threadId:selected.id,body:reply,to:selected.from,subject:"Re: "+selected.subject})
+      });
+      if(!res.ok)throw new Error("Send failed");
+      setSendStatus("sent");setReply("");
+      // Refresh thread list
+      fetchThreads();
+    }catch(e){setSendStatus("error: "+e.message);}
+    finally{setSending(false);}
+  }
+
+  async function sendAck(thread){
+    setAckLoading(thread.id);
+    try{
+      const res=await fetch("/api/gmail-ack",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({to:thread.from,name:thread.fromName||"",bizName:biz?.name||"C-RAM Entertainment",subject:"Re: "+thread.subject})
+      });
+      if(!res.ok)throw new Error("Ack failed");
+      setAckStatus(prev=>({...prev,[thread.id]:"sent"}));
+    }catch(e){setAckStatus(prev=>({...prev,[thread.id]:"error"}));}
+    finally{setAckLoading(null);}
+  }
+
+  if(loading)return(
+    <div style={{padding:40,textAlign:"center",color:C.muted}}>Loading enquiries…</div>
+  );
+
+  if(err==="setup")return(
+    <div style={{maxWidth:600,margin:"40px auto",padding:24}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:32}}>
+        <div style={{fontSize:40,marginBottom:16,textAlign:"center"}}>📨</div>
+        <h2 style={{fontFamily:"'Bebas Neue'",fontSize:28,letterSpacing:1,marginBottom:12,textAlign:"center"}}>Enquiries Inbox</h2>
+        <p style={{color:C.muted,marginBottom:20,lineHeight:1.6,textAlign:"center"}}>
+          To enable the live Gmail inbox, add a <strong style={{color:C.text}}>Gmail API backend route</strong> (<code style={{background:C.bg,padding:"2px 6px",borderRadius:4,fontSize:12}}>/api/gmail-enquiries</code>) to your Vercel project.
+        </p>
+        <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:16,marginBottom:20}}>
+          <div style={{fontSize:12,color:C.gold,fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:0.5}}>What you need</div>
+          {["Gmail OAuth credentials (or use Gmail MCP token)","A /api/gmail-enquiries Vercel serverless function","A /api/gmail-reply function to send replies","A /api/ai-improve function for AI rephrasing"].map(s=>(
+            <div key={s} style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:6}}>
+              <span style={{color:C.green,marginTop:1}}>✓</span>
+              <span style={{fontSize:13,color:C.muted}}>{s}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center"}}>
+          <button onClick={fetchThreads} style={{background:C.gold,color:"#000",border:"none",borderRadius:8,padding:"10px 24px",fontWeight:700,fontSize:14}}>
+            Retry Connection
+          </button>
+        </div>
+      </div>
+
+      {/* Teaser — show what it will look like */}
+      <div style={{marginTop:24,opacity:0.4,pointerEvents:"none"}}>
+        <div style={{marginBottom:8,fontSize:12,color:C.muted,textTransform:"uppercase",letterSpacing:0.5}}>Preview (sample data)</div>
+        {[
+          {id:"1",subject:"Wedding DJ Enquiry — Nov 15",from:"sarah@example.com",fromName:"Sarah M.",snippet:"Hi! We're looking for a DJ for our wedding…",date:"2026-10-11"},
+          {id:"2",subject:"Corporate event DJ needed",from:"john@corp.com",fromName:"John D.",snippet:"We have a corporate event on the 20th…",date:"2026-10-10"},
+        ].map(t=>(
+          <div key={t.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"12px 16px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:14,marginBottom:2}}>{t.fromName} <span style={{color:C.muted,fontWeight:400,fontSize:12}}>{"<"}{t.from}{">"}</span></div>
+              <div style={{fontSize:13,color:C.text,marginBottom:2}}>{t.subject}</div>
+              <div style={{fontSize:12,color:C.muted}}>{t.snippet}</div>
+            </div>
+            <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",marginLeft:12}}>{timeAgo(t.date)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if(err)return(
+    <div style={{padding:32,color:C.coral}}>Error: {err} <button onClick={fetchThreads} style={{marginLeft:12,background:"none",border:`1px solid ${C.coral}`,color:C.coral,borderRadius:6,padding:"4px 12px",fontSize:13}}>Retry</button></div>
+  );
+
+  return(
+    <div style={{display:"flex",height:"calc(100vh - 110px)",overflow:"hidden"}}>
+      {/* Thread list */}
+      <div style={{width:340,flexShrink:0,borderRight:`1px solid ${C.border}`,overflowY:"auto",background:C.surface}}>
+        <div style={{padding:"14px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:1}}>📨 Enquiries</div>
+          <button onClick={fetchThreads} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"4px 10px",fontSize:12}}>Refresh</button>
+        </div>
+        {threads.length===0&&(
+          <div style={{padding:24,color:C.muted,textAlign:"center",fontSize:13}}>No enquiry emails found.<br/>New bookings from your website will appear here.</div>
+        )}
+        {threads.map(t=>(
+          <div key={t.id} onClick={()=>loadDetail(t)}
+            style={{padding:"12px 16px",borderBottom:`1px solid ${C.border}`,cursor:"pointer",
+              background:selected?.id===t.id?C.gold+"15":t.unread?"#fff2":undefined,
+              transition:"background 0.15s"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
+              <div style={{fontWeight:t.unread?700:500,fontSize:13,color:C.text}}>{t.fromName||t.from}</div>
+              <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",marginLeft:8}}>{timeAgo(t.date)}</div>
+            </div>
+            <div style={{fontSize:12,color:t.unread?C.text:C.muted,fontWeight:t.unread?600:400,marginBottom:2}}>{t.subject}</div>
+            <div style={{fontSize:11,color:C.dim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.snippet}</div>
+            {ackStatus[t.id]==="sent"&&<div style={{marginTop:4,fontSize:10,color:C.green}}>✓ Acknowledgement sent</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* Detail / reply pane */}
+      <div style={{flex:1,overflowY:"auto",padding:24,display:"flex",flexDirection:"column",gap:16}}>
+        {!selected&&(
+          <div style={{margin:"auto",textAlign:"center",color:C.muted}}>
+            <div style={{fontSize:40,marginBottom:12}}>📨</div>
+            <div>Select an enquiry to read and reply</div>
+          </div>
+        )}
+        {selected&&(
+          <>
+            {/* Thread header */}
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
+              <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>{selected.subject}</div>
+              <div style={{fontSize:13,color:C.muted,marginBottom:8}}>
+                From: <span style={{color:C.text}}>{selected.fromName} {"<"}{selected.from}{">"}</span>
+                <span style={{marginLeft:16}}>{timeAgo(selected.date)}</span>
+              </div>
+              {/* Quick ack button */}
+              {!ackStatus[selected.id]&&(
+                <button onClick={()=>sendAck(selected)}
+                  disabled={ackLoading===selected.id}
+                  style={{background:"none",border:`1px solid ${C.gold}`,color:C.gold,borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600}}>
+                  {ackLoading===selected.id?"Sending…":"📤 Send Auto-Acknowledgement"}
+                </button>
+              )}
+              {ackStatus[selected.id]==="sent"&&<div style={{color:C.green,fontSize:12,fontWeight:600}}>✓ Acknowledgement sent to {selected.from}</div>}
+              {ackStatus[selected.id]==="error"&&<div style={{color:C.coral,fontSize:12}}>⚠ Failed to send acknowledgement</div>}
+            </div>
+
+            {/* Messages */}
+            {loadingDetail&&<div style={{color:C.muted,textAlign:"center",padding:20}}>Loading…</div>}
+            {detail&&!detail.error&&(detail.messages||[]).map((msg,i)=>(
+              <div key={i} style={{background:msg.from?.includes(biz?.email||"djc.ram")?"#1a2a1a":"#1a1a2a",border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
+                <div style={{fontSize:12,color:C.muted,marginBottom:8}}>
+                  <strong style={{color:C.text}}>{msg.from}</strong> · {timeAgo(msg.date)}
+                </div>
+                <div style={{fontSize:14,lineHeight:1.7,whiteSpace:"pre-wrap",color:C.text}}>{msg.body}</div>
+              </div>
+            ))}
+            {detail?.error&&<div style={{color:C.coral,fontSize:13}}>Could not load message: {detail.error}</div>}
+
+            {/* Reply composer */}
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
+              <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:C.gold}}>✏️ Your Reply</div>
+              <textarea
+                value={reply}
+                onChange={e=>setReply(e.target.value)}
+                placeholder="Type your reply here…"
+                style={{width:"100%",minHeight:120,resize:"vertical",marginBottom:12,fontSize:14,lineHeight:1.6}}
+              />
+              {/* AI assist row */}
+              <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}>
+                <div style={{fontSize:12,color:C.muted,whiteSpace:"nowrap"}}>AI assist:</div>
+                <select value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)}
+                  style={{flex:1,minWidth:180,fontSize:12,padding:"6px 10px"}}>
+                  <option value="correct grammar and rephrase professionally">Correct grammar & rephrase professionally</option>
+                  <option value="make more friendly and warm">Make more friendly & warm</option>
+                  <option value="make more formal and concise">Make more formal & concise</option>
+                  <option value="expand with more detail">Expand with more detail</option>
+                  <option value="shorten and tighten">Shorten & tighten</option>
+                </select>
+                <button onClick={aiImprove} disabled={aiLoading||!reply.trim()}
+                  style={{background:C.purple,color:"#fff",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>
+                  {aiLoading?"Improving…":"✨ Improve"}
+                </button>
+              </div>
+              {/* Send row */}
+              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <button onClick={sendReply} disabled={sending||!reply.trim()}
+                  style={{background:C.gold,color:"#000",border:"none",borderRadius:8,padding:"10px 24px",fontWeight:700,fontSize:14}}>
+                  {sending?"Sending…":"📤 Send Reply"}
+                </button>
+                {sendStatus==="sent"&&<span style={{color:C.green,fontSize:13,fontWeight:600}}>✓ Reply sent!</span>}
+                {sendStatus&&sendStatus.startsWith("error")&&<span style={{color:C.coral,fontSize:12}}>{sendStatus}</span>}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // -- GET IN TOUCH (public enquiry page - wired to /api/send-email + CRM) ---
 const OCCASIONS = ["Birthday Party","Wedding","Corporate","Engagement","Other"];
 
@@ -2030,6 +2312,7 @@ export default function App(){
             {tab==="packages"&&<Packages packages={packages} addons={addons} onSavePackage={onSavePackage} onDeletePackage={onDeletePackage} onSaveAddon={onSaveAddon} onDeleteAddon={onDeleteAddon}/>}
             {tab==="calendar"&&<CalendarTab biz={biz}/>}
             {tab==="specials"&&<Specials clients={clients} biz={biz}/>}
+            {tab==="enquiries"&&<Enquiries biz={biz}/>}
             {tab==="settings"&&<Settings biz={biz} onSaveBiz={onSaveBiz}/>}
             {tab==="getintouch"&&<GetInTouch biz={biz} onSubmitLead={onSubmitLead} embedded={true}/>}
           </>
