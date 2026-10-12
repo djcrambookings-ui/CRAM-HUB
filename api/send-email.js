@@ -33,7 +33,8 @@ export async function buildInvoicePdf(inv, biz) {
   inv = inv || {}; biz = biz || {};
   const items = Array.isArray(inv.items) ? inv.items : [];
   const subtotal = items.reduce((s, i) => s + (Number(i.qty) * Number(i.rate) || 0), 0);
-  const gst = subtotal * 0.1;
+  const includeGST = inv.includeGST !== false;
+  const gst = includeGST ? subtotal * 0.1 : 0;
   const total = subtotal + gst;
 
   const doc = await PDFDocument.create();
@@ -123,10 +124,15 @@ export async function buildInvoicePdf(inv, biz) {
   // Totals
   y -= 8;
   const tx = width - M - 8;
-  TR("Subtotal (ex GST)", tx - 95, y, { size: 9, color: gray }); TR(money(subtotal), tx, y, { size: 9 }); y -= 15;
-  TR("GST (10%)", tx - 95, y, { size: 9, color: gray }); TR(money(gst), tx, y, { size: 9 }); y -= 8;
-  page.drawLine({ start: { x: tx - 170, y }, end: { x: tx, y }, thickness: 1, color: dark }); y -= 16;
-  TR("TOTAL (inc GST)", tx - 95, y, { size: 11, bold: true }); TR(money(total), tx, y, { size: 12, bold: true, color: gold });
+  if (includeGST) {
+    TR("Subtotal (ex GST)", tx - 95, y, { size: 9, color: gray }); TR(money(subtotal), tx, y, { size: 9 }); y -= 15;
+    TR("GST (10%)", tx - 95, y, { size: 9, color: gray }); TR(money(gst), tx, y, { size: 9 }); y -= 8;
+    page.drawLine({ start: { x: tx - 170, y }, end: { x: tx, y }, thickness: 1, color: dark }); y -= 16;
+    TR("TOTAL (inc GST)", tx - 95, y, { size: 11, bold: true }); TR(money(total), tx, y, { size: 12, bold: true, color: gold });
+  } else {
+    page.drawLine({ start: { x: tx - 170, y }, end: { x: tx, y }, thickness: 1, color: dark }); y -= 16;
+    TR("TOTAL", tx - 95, y, { size: 11, bold: true }); TR(money(total), tx, y, { size: 12, bold: true, color: gold });
+  }
   y -= 42;
 
   // Payment details band
