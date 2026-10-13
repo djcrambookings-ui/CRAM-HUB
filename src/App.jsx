@@ -2435,6 +2435,8 @@ function Login() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState("login"); // "login" | "reset"
+  const [resetSent, setResetSent] = useState(false);
   const signIn = async () => {
     setErr("");
     if (!supabase) { setErr("Not connected to the database yet. Add your Supabase keys in Vercel and redeploy."); return; }
@@ -2444,17 +2446,49 @@ function Login() {
     setBusy(false);
     if (error) setErr(error.message || "Couldn't sign in. Check your email and password.");
   };
+  const sendReset = async () => {
+    setErr("");
+    if (!supabase) { setErr("Not connected to the database."); return; }
+    if (!email) { setErr("Enter your email address first."); return; }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin,
+    });
+    setBusy(false);
+    if (error) setErr(error.message || "Couldn't send reset email.");
+    else setResetSent(true);
+  };
   return (
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}>
       <style>{css}</style>
       <div style={{marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:12}}><EQBars/><LogoW height={40}/></div>
       <Card style={{maxWidth:360,width:"100%",textAlign:"center",padding:"32px 24px"}}>
         <h2 style={{fontFamily:"Bebas Neue,sans-serif",fontSize:26,letterSpacing:1,color:C.text}}>Business Hub</h2>
-        <p style={{color:C.muted,fontSize:13,marginTop:4,marginBottom:18}}>Private {"\u2014"} sign in to continue.</p>
-        <input type="email" value={email} placeholder="Email" autoComplete="username" onChange={e=>{setEmail(e.target.value);setErr("");}} style={{marginBottom:10,textAlign:"center"}} />
-        <input type="password" value={password} placeholder="Password" autoComplete="current-password" onChange={e=>{setPassword(e.target.value);setErr("");}} onKeyDown={e=>{if(e.key==="Enter")signIn();}} style={{marginBottom:err?8:14,textAlign:"center"}} />
-        {err && <div style={{color:C.coral,fontSize:12.5,marginBottom:12}}>{err}</div>}
-        <Btn onClick={signIn} disabled={busy} style={{width:"100%"}}>{busy?"Signing in\u2026":"Sign In"}</Btn>
+        {mode==="reset" ? (
+          resetSent ? (
+            <>
+              <p style={{color:C.green,fontSize:13,margin:"12px 0 18px"}}>Reset link sent! Check your email and click the link to set a new password.</p>
+              <button onClick={()=>{setMode("login");setResetSent(false);}} style={{background:"transparent",border:"none",color:C.gold,fontSize:13,cursor:"pointer",textDecoration:"underline"}}>Back to sign in</button>
+            </>
+          ) : (
+            <>
+              <p style={{color:C.muted,fontSize:13,marginTop:4,marginBottom:18}}>Enter your email and we'll send a reset link.</p>
+              <input type="email" value={email} placeholder="Email" autoComplete="username" onChange={e=>{setEmail(e.target.value);setErr("");}} style={{marginBottom:err?8:14,textAlign:"center"}} />
+              {err && <div style={{color:C.coral,fontSize:12.5,marginBottom:12}}>{err}</div>}
+              <Btn onClick={sendReset} disabled={busy} style={{width:"100%"}}>{busy?"Sending\u2026":"Send Reset Link"}</Btn>
+              <button onClick={()=>{setMode("login");setErr("");}} style={{background:"transparent",border:"none",color:C.muted,fontSize:12,cursor:"pointer",marginTop:14,textDecoration:"underline"}}>Back to sign in</button>
+            </>
+          )
+        ) : (
+          <>
+            <p style={{color:C.muted,fontSize:13,marginTop:4,marginBottom:18}}>Private {"\u2014"} sign in to continue.</p>
+            <input type="email" value={email} placeholder="Email" autoComplete="username" onChange={e=>{setEmail(e.target.value);setErr("");}} style={{marginBottom:10,textAlign:"center"}} />
+            <input type="password" value={password} placeholder="Password" autoComplete="current-password" onChange={e=>{setPassword(e.target.value);setErr("");}} onKeyDown={e=>{if(e.key==="Enter")signIn();}} style={{marginBottom:err?8:14,textAlign:"center"}} />
+            {err && <div style={{color:C.coral,fontSize:12.5,marginBottom:12}}>{err}</div>}
+            <Btn onClick={signIn} disabled={busy} style={{width:"100%"}}>{busy?"Signing in\u2026":"Sign In"}</Btn>
+            <button onClick={()=>{setMode("reset");setErr("");}} style={{background:"transparent",border:"none",color:C.muted,fontSize:12,cursor:"pointer",marginTop:14,textDecoration:"underline"}}>Forgot password?</button>
+          </>
+        )}
       </Card>
     </div>
   );
